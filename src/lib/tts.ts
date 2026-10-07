@@ -32,8 +32,18 @@ export async function generateAudioUrlOnce(text: string, language: string) {
       return "";
     }
 
-    const data = await response.json();
-    return typeof data.audioUrl === "string" ? data.audioUrl : "";
+    const contentType = response.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      return typeof data.audioUrl === "string" ? data.audioUrl : "";
+    }
+
+    if (contentType.startsWith("audio/")) {
+      const buffer = Buffer.from(await response.arrayBuffer());
+      return `data:${contentType};base64,${buffer.toString("base64")}`;
+    }
+
+    return "";
   } catch (error) {
     console.error("Audio generation failed", error);
     return "";

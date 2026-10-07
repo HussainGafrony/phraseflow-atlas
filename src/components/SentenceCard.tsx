@@ -1,6 +1,7 @@
 "use client";
 
 import { SUPPORTED_LANGUAGES } from "@/lib/constants";
+import { useI18n } from "./I18nProvider";
 
 export type SentenceView = {
   id: string;
@@ -20,6 +21,7 @@ type SentenceCardProps = {
 };
 
 export function SentenceCard({ sentence, onSave, saving }: SentenceCardProps) {
+  const { t } = useI18n();
   const language = SUPPORTED_LANGUAGES.find((item) => item.value === sentence.language);
 
   function listen() {
@@ -49,11 +51,11 @@ export function SentenceCard({ sentence, onSave, saving }: SentenceCardProps) {
       </p>
       <div className="sentence-actions">
         <button type="button" className="secondary-button" onClick={listen}>
-          Listen
+          {t("listen")}
         </button>
         {onSave ? (
           <button type="button" className="primary-button small" onClick={() => onSave(sentence.id)} disabled={saving}>
-            {saving ? "Saving..." : "Save"}
+            {saving ? "Saving..." : t("save")}
           </button>
         ) : null}
       </div>

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { FrequencyLevel, LearningLanguage, LearningLevel, ProviderKey } from "../constants";
+import type { LearningLanguage, ProviderKey } from "../constants";
 import { SUPPORTED_LANGUAGES } from "../constants";
 import { decryptSecret } from "../crypto";
 import { AIProvider } from "@/models/AIProvider";
@@ -13,8 +13,8 @@ export type GeneratedSentence = {
 type GenerationInput = {
   language: LearningLanguage;
   topic: string;
-  level: LearningLevel;
-  frequency: FrequencyLevel;
+  level: string;
+  frequency: string;
   count: number;
   avoid: string[];
 };
@@ -174,12 +174,40 @@ function parseProviderJson(content: unknown) {
     return [];
   }
 
-  const parsed = generatedSchema.safeParse(JSON.parse(content));
+  const cleaned = content
+    .trim()
+    .replace(/^```json/i, "")
+    .replace(/^```/, "")
+    .replace(/```$/, "")
+    .trim();
+
+  const parsed = generatedSchema.safeParse(JSON.parse(cleaned));
   if (!parsed.success) {
     return [];
   }
 
   return parsed.data.sentences;
+}
+
+export async function testProviderConnection(providerName: ProviderKey) {
+  const provider = await AIProvider.findOne({ provider: providerName }).lean();
+  if (!provider?.enabled) {
+    return { ok: false, message: "Provider is not enabled." };
+  }
+
+  const result = await callProvider(provider, {
+    language: "english",
+    topic: "Daily life",
+    level: "Beginner",
+    frequency: "most-common",
+    count: 1,
+    avoid: []
+  });
+
+  return {
+    ok: result.length > 0,
+    message: result.length ? "Provider generated a test sentence." : "Provider returned no usable sentence."
+  };
 }
 
 function generateFallbackSentences(input: GenerationInput): GeneratedSentence[] {
@@ -199,7 +227,7 @@ function generateFallbackSentences(input: GenerationInput): GeneratedSentence[] 
 function fallbackText(
   language: LearningLanguage,
   topic: string,
-  level: LearningLevel,
+  level: string,
   number: number,
   seed: string
 ) {

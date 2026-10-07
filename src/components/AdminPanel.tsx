@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SUPPORTED_LANGUAGES } from "@/lib/constants";
+import { useI18n } from "./I18nProvider";
 
 type ProviderState = {
   provider: string;
@@ -28,10 +29,21 @@ type LandingState = {
   arabicTranslation: string;
 };
 
+type LearningOptionState = {
+  type: "topic" | "level" | "frequency";
+  label: string;
+  value: string;
+  description?: string;
+  order: number;
+  isActive: boolean;
+};
+
 export function AdminPanel() {
+  const { t } = useI18n();
   const [users, setUsers] = useState<UserState[]>([]);
   const [providers, setProviders] = useState<ProviderState[]>([]);
   const [landing, setLanding] = useState<LandingState[]>([]);
+  const [options, setOptions] = useState<LearningOptionState[]>([]);
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [unlockCode, setUnlockCode] = useState("");
@@ -42,6 +54,7 @@ export function AdminPanel() {
     loadUsers();
     loadProviders();
     loadLanding();
+    loadOptions();
   }, []);
 
   async function loadUsers() {
@@ -69,6 +82,15 @@ export function AdminPanel() {
     }
     const data = await response.json();
     setLanding(data.sentences ?? []);
+  }
+
+  async function loadOptions() {
+    const response = await fetch("/api/admin/options");
+    if (!response.ok) {
+      return;
+    }
+    const data = await response.json();
+    setOptions([...(data.topics ?? []), ...(data.levels ?? []), ...(data.frequencies ?? [])]);
   }
 
   async function createUser(event: React.FormEvent<HTMLFormElement>) {
@@ -148,6 +170,33 @@ export function AdminPanel() {
     setMessage("Landing sentences saved for this week.");
   }
 
+  async function saveOptions() {
+    setMessage("");
+    const response = await fetch("/api/admin/options", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ options })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setMessage(data.error ?? "Could not save learning options.");
+      return;
+    }
+    setMessage("Learning options saved.");
+    loadOptions();
+  }
+
+  async function testProvider(provider: string) {
+    setMessage(`Testing ${provider}...`);
+    const response = await fetch("/api/admin/providers/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider })
+    });
+    const data = await response.json();
+    setMessage(data.message ?? (response.ok ? "Provider works." : "Provider test failed."));
+  }
+
   function updateProvider(index: number, key: keyof ProviderState, value: string | number | boolean) {
     setProviders((current) =>
       current.map((provider, providerIndex) =>
@@ -164,14 +213,23 @@ export function AdminPanel() {
     );
   }
 
+  function updateOption(index: number, key: keyof LearningOptionState, value: string | number | boolean) {
+    setOptions((current) =>
+      current.map((option, optionIndex) =>
+        optionIndex === index ? { ...option, [key]: value } : option
+      )
+    );
+  }
+
   return (
     <section className="admin-panel">
       <div className="tabs" role="tablist" aria-label="Admin sections">
         {[
-          ["users", "Users"],
-          ["unlock", "Unlock code"],
-          ["providers", "AI providers"],
-          ["landing", "Landing sentences"]
+          ["users", t("users")],
+          ["unlock", t("unlockCode")],
+          ["providers", t("aiProviders")],
+          ["landing", t("landingSentences")],
+          ["options", t("learningOptions")]
         ].map(([value, label]) => (
           <button
             type="button"
@@ -248,14 +306,19 @@ export function AdminPanel() {
                   <h2>{provider.displayName}</h2>
                   <p>{provider.hasApiKey ? "API key saved" : "No API key saved yet"}</p>
                 </div>
-                <label className="switch-row">
-                  Enabled
-                  <input
-                    type="checkbox"
-                    checked={provider.enabled}
-                    onChange={(event) => updateProvider(index, "enabled", event.target.checked)}
-                  />
-                </label>
+                <div className="provider-actions">
+                  <button className="secondary-button" type="button" onClick={() => testProvider(provider.provider)}>
+                    Test
+                  </button>
+                  <label className="switch-row">
+                    Enabled
+                    <input
+                      type="checkbox"
+                      checked={provider.enabled}
+                      onChange={(event) => updateProvider(index, "enabled", event.target.checked)}
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="provider-fields">
@@ -353,6 +416,78 @@ export function AdminPanel() {
           </button>
           <button className="primary-button" type="button" onClick={saveLanding}>
             Save landing sentences
+          </button>
+        </div>
+      ) : null}
+
+      {activeTab === "options" ? (
+        <div className="provider-list">
+          {options.map((option, index) => (
+            <article className="panel-block provider-card" key={`${option.type}-${option.value}-${index}`}>
+              <div className="provider-fields landing-fields">
+                <label>
+                  Type
+                  <select
+                    value={option.type}
+                    onChange={(event) =>
+                      updateOption(index, "type", event.target.value as LearningOptionState["type"])
+                    }
+                  >
+                    <option value="topic">Topic</option>
+                    <option value="level">Level</option>
+                    <option value="frequency">Frequency</option>
+                  </select>
+                </label>
+                <label>
+                  Label
+                  <input value={option.label} onChange={(event) => updateOption(index, "label", event.target.value)} />
+                </label>
+                <label>
+                  Value
+                  <input value={option.value} onChange={(event) => updateOption(index, "value", event.target.value)} />
+                </label>
+              </div>
+              <div className="option-row">
+                <label>
+                  Order
+                  <input
+                    type="number"
+                    value={option.order}
+                    onChange={(event) => updateOption(index, "order", Number(event.target.value))}
+                  />
+                </label>
+                <label className="switch-row">
+                  Active
+                  <input
+                    type="checkbox"
+                    checked={option.isActive}
+                    onChange={(event) => updateOption(index, "isActive", event.target.checked)}
+                  />
+                </label>
+                <button
+                  className="ghost-button"
+                  type="button"
+                  onClick={() => setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index))}
+                >
+                  Remove
+                </button>
+              </div>
+            </article>
+          ))}
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() =>
+              setOptions((current) => [
+                ...current,
+                { type: "topic", label: "New option", value: "new-option", order: current.length, isActive: true }
+              ])
+            }
+          >
+            Add option
+          </button>
+          <button className="primary-button" type="button" onClick={saveOptions}>
+            Save learning options
           </button>
         </div>
       ) : null}

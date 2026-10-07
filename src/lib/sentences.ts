@@ -5,7 +5,6 @@ import {
   UNLOCK_AFTER_SENTENCES,
   type FrequencyLevel,
   type LearningLanguage,
-  type LearningLevel
 } from "./constants";
 import { createStableHash } from "./crypto";
 import { getDayKey } from "./dates";
@@ -18,8 +17,8 @@ import { SentenceDelivery } from "@/models/SentenceDelivery";
 export type SentenceCriteria = {
   language: LearningLanguage;
   topic: string;
-  level: LearningLevel;
-  frequency: FrequencyLevel;
+  level: string;
+  frequency: FrequencyLevel | string;
 };
 
 export async function getTodaySentencesForUser(userId: string, criteria: SentenceCriteria) {
@@ -56,13 +55,37 @@ export async function getTodaySentencesForUser(userId: string, criteria: Sentenc
   const deliveredIds = delivered.map((item) => item.sentenceId);
   const avoidSentences = await Sentence.find({ _id: { $in: deliveredIds } }).select("text").lean();
 
+  const reservedUsage = await DailyUsage.findOneAndUpdate(
+    {
+      _id: usage._id,
+      totalDelivered: usage.totalDelivered,
+      unlocked: usage.unlocked
+    },
+    { $inc: { totalDelivered: count, batchesDelivered: 1 } },
+    { new: true }
+  );
+
+  if (!reservedUsage) {
+    return {
+      status: "retry" as const,
+      dayKey,
+      remaining: Math.max(0, DAILY_SENTENCE_LIMIT - usage.totalDelivered),
+      sentences: []
+    };
+  }
+
   const sentences = await buildUniqueSentences(criteria, count, avoidSentences.map((item) => item.text));
 
   if (!sentences.length) {
+    await DailyUsage.updateOne(
+      { _id: usage._id },
+      { $inc: { totalDelivered: -count, batchesDelivered: -1 } }
+    );
+
     return {
       status: "empty" as const,
       dayKey,
-      remaining: DAILY_SENTENCE_LIMIT - usage.totalDelivered,
+      remaining: DAILY_SENTENCE_LIMIT - (reservedUsage.totalDelivered - count),
       sentences: []
     };
   }
@@ -77,14 +100,14 @@ export async function getTodaySentencesForUser(userId: string, criteria: Sentenc
     { ordered: false }
   ).catch(() => null);
 
-  usage.totalDelivered += sentences.length;
-  usage.batchesDelivered += 1;
-  await usage.save();
+  if (sentences.length < count) {
+    await DailyUsage.updateOne({ _id: usage._id }, { $inc: { totalDelivered: -(count - sentences.length) } });
+  }
 
   return {
     status: "ok" as const,
     dayKey,
-    remaining: DAILY_SENTENCE_LIMIT - usage.totalDelivered,
+    remaining: DAILY_SENTENCE_LIMIT - (reservedUsage.totalDelivered - (count - sentences.length)),
     sentences
   };
 }

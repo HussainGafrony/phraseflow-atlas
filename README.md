@@ -11,6 +11,9 @@ Daily sentence learning app for German, English, and Greek with Arabic translati
 - Saved sentences page separated by day.
 - Topic progress indicators.
 - Admin panel for users, unlock code, AI provider settings, and landing sentences.
+- First-admin setup page at `/admin/setup` protected by `ADMIN_SETUP_TOKEN`.
+- Editable topics, levels, and frequency options from the admin panel.
+- Basic UI language switcher for English, Arabic, German, and Greek.
 - MongoDB models ready for MongoDB Atlas.
 - AI provider settings for OpenAI, Gemini, Claude, DeepSeek, and Grok.
 
@@ -21,6 +24,7 @@ Daily sentence learning app for German, English, and Greek with Arabic translati
    - `MONGODB_URI`
    - `SESSION_SECRET`
    - `APP_ENCRYPTION_KEY`
+   - `ADMIN_SETUP_TOKEN`
 3. Install dependencies:
 
 ```bash
@@ -32,6 +36,8 @@ npm install
 ```bash
 ADMIN_USERNAME=admin ADMIN_PASSWORD=your-password npm run seed:admin
 ```
+
+Or use `/admin/setup` after configuring `ADMIN_SETUP_TOKEN`. The setup page closes after the first admin exists.
 
 5. Start development:
 
@@ -46,6 +52,7 @@ npm run dev
 - `/dashboard` user learning dashboard
 - `/saved` saved sentences
 - `/admin/login` admin login
+- `/admin/setup` first-admin setup
 - `/admin` admin panel
 
 ## AI providers

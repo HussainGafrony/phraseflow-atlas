@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   FREQUENCIES,
   LEVELS,
@@ -9,6 +9,7 @@ import {
   DAILY_SENTENCE_LIMIT
 } from "@/lib/constants";
 import { SentenceCard, type SentenceView } from "./SentenceCard";
+import { useI18n } from "./I18nProvider";
 
 type ProgressItem = {
   topic: string;
@@ -17,7 +18,13 @@ type ProgressItem = {
   percent: number;
 };
 
+type LearningOption = {
+  label: string;
+  value: string;
+};
+
 export function DashboardClient({ username }: { username: string }) {
+  const { t } = useI18n();
   const [language, setLanguage] = useState<string>("german");
   const [topic, setTopic] = useState<string>(TOPICS[0]);
   const [level, setLevel] = useState<string>(LEVELS[0]);
@@ -30,19 +37,36 @@ export function DashboardClient({ username }: { username: string }) {
   const [needsUnlock, setNeedsUnlock] = useState(false);
   const [savingId, setSavingId] = useState("");
   const [progress, setProgress] = useState<ProgressItem[]>([]);
+  const [topics, setTopics] = useState<LearningOption[]>(TOPICS.map((topic) => ({ label: topic, value: topic })));
+  const [levels, setLevels] = useState<LearningOption[]>(LEVELS.map((item) => ({ label: item, value: item })));
+  const [frequencies, setFrequencies] = useState<LearningOption[]>(
+    FREQUENCIES.map((item) => ({ label: item.label, value: item.value }))
+  );
 
-  useEffect(() => {
-    refreshProgress();
+  const loadOptions = useCallback(async () => {
+    const response = await fetch("/api/options");
+    if (!response.ok) {
+      return;
+    }
+    const data = await response.json();
+    setTopics((current) => data.topics ?? current);
+    setLevels((current) => data.levels ?? current);
+    setFrequencies((current) => data.frequencies ?? current);
   }, []);
 
-  async function refreshProgress() {
+  const refreshProgress = useCallback(async () => {
     const response = await fetch("/api/progress");
     if (!response.ok) {
       return;
     }
     const data = await response.json();
     setProgress(data.topics ?? []);
-  }
+  }, []);
+
+  useEffect(() => {
+    loadOptions();
+    refreshProgress();
+  }, [loadOptions, refreshProgress]);
 
   async function getSentences() {
     setLoading(true);
@@ -121,13 +145,13 @@ export function DashboardClient({ username }: { username: string }) {
     <section className="dashboard-content">
       <div className="page-heading">
         <p className="eyebrow">Welcome, {username}</p>
-        <h1>Today’s sentences</h1>
+        <h1>{t("todaySentences")}</h1>
         <p>Pick your learning path and request up to 20 fresh sentences per day.</p>
       </div>
 
       <div className="control-panel">
         <label>
-          Language
+          {t("language")}
           <select value={language} onChange={(event) => setLanguage(event.target.value)}>
             {SUPPORTED_LANGUAGES.map((item) => (
               <option value={item.value} key={item.value}>
@@ -137,29 +161,29 @@ export function DashboardClient({ username }: { username: string }) {
           </select>
         </label>
         <label>
-          Topic
+          {t("topic")}
           <select value={topic} onChange={(event) => setTopic(event.target.value)}>
-            {TOPICS.map((item) => (
-              <option value={item} key={item}>
-                {item}
+            {topics.map((item) => (
+              <option value={item.value} key={item.value}>
+                {item.label}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Level
+          {t("level")}
           <select value={level} onChange={(event) => setLevel(event.target.value)}>
-            {LEVELS.map((item) => (
-              <option value={item} key={item}>
-                {item}
+            {levels.map((item) => (
+              <option value={item.value} key={item.value}>
+                {item.label}
               </option>
             ))}
           </select>
         </label>
         <label>
-          Frequency
+          {t("frequency")}
           <select value={frequency} onChange={(event) => setFrequency(event.target.value)}>
-            {FREQUENCIES.map((item) => (
+            {frequencies.map((item) => (
               <option value={item.value} key={item.value}>
                 {item.label}
               </option>
@@ -170,7 +194,7 @@ export function DashboardClient({ username }: { username: string }) {
 
       <div className="action-row">
         <button className="primary-button" type="button" onClick={getSentences} disabled={loading || remaining <= 0 || needsUnlock}>
-          {loading ? "Generating..." : "Give me today’s sentences"}
+          {loading ? "Generating..." : t("giveMeSentences")}
         </button>
         <span>{remaining} sentences left today</span>
       </div>

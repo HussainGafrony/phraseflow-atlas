@@ -53,6 +53,30 @@ button:disabled {
   letter-spacing: 0;
 }
 
+.language-switcher {
+  position: fixed;
+  z-index: 30;
+  right: 18px;
+  bottom: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgb(255 253 248 / 94%);
+  box-shadow: var(--shadow);
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 8px;
+}
+
+.language-switcher select {
+  width: auto;
+  min-width: 112px;
+  padding: 8px 10px;
+}
+
 .landing-page {
   min-height: 100vh;
 }
@@ -544,6 +568,12 @@ select:focus {
   font-weight: 800;
 }
 
+.provider-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .switch-row input {
   width: auto;
 }
@@ -558,12 +588,21 @@ select:focus {
   grid-template-columns: minmax(130px, 180px) minmax(220px, 1fr) minmax(220px, 1fr);
 }
 
+.option-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) auto auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 12px;
+}
+
 @media (max-width: 920px) {
   .sentence-marquee,
   .control-panel,
   .admin-grid,
   .provider-fields,
-  .landing-fields {
+  .landing-fields,
+  .option-row {
     grid-template-columns: 1fr;
   }
 

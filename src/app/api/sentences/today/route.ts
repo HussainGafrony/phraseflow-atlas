@@ -4,6 +4,7 @@ import { handleRouteError, jsonError } from "@/lib/http";
 import { requireApiSession } from "@/lib/auth";
 import { sentenceRequestSchema } from "@/lib/validators";
 import { getTodaySentencesForUser, type SentenceCriteria } from "@/lib/sentences";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,13 @@ export async function POST(request: Request) {
     }
 
     await dbConnect();
+    const limit = await checkRateLimit(`sentences:${session.userId}`, 8, 60);
+    if (!limit.allowed) {
+      return jsonError("Please wait a moment before requesting more sentences.", 429, {
+        retryAfter: limit.retryAfter
+      });
+    }
+
     const criteria = sentenceRequestSchema.parse(await request.json()) as SentenceCriteria;
     const result = await getTodaySentencesForUser(session.userId, criteria);
 

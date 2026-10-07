@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { type TranslationKey } from "@/lib/i18n";
+import { useI18n } from "./I18nProvider";
 
 type LoginFormProps = {
   expectedRole: "user" | "admin";
-  buttonLabel: string;
+  buttonKey: TranslationKey;
 };
 
-export function LoginForm({ expectedRole, buttonLabel }: LoginFormProps) {
+export function LoginForm({ expectedRole, buttonKey }: LoginFormProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -41,7 +44,7 @@ export function LoginForm({ expectedRole, buttonLabel }: LoginFormProps) {
   return (
     <form className="stack-form" onSubmit={handleSubmit}>
       <label>
-        Username
+        {t("username")}
         <input
           autoComplete="username"
           value={username}
@@ -50,7 +53,7 @@ export function LoginForm({ expectedRole, buttonLabel }: LoginFormProps) {
         />
       </label>
       <label>
-        Password
+        {t("password")}
         <input
           autoComplete="current-password"
           type="password"
@@ -61,7 +64,7 @@ export function LoginForm({ expectedRole, buttonLabel }: LoginFormProps) {
       </label>
       {message ? <p className="form-message error">{message}</p> : null}
       <button className="primary-button" disabled={loading} type="submit">
-        {loading ? "Checking..." : buttonLabel}
+        {loading ? "Checking..." : t(buttonKey)}
       </button>
     </form>
   );

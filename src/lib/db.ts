@@ -31,9 +31,19 @@ export async function dbConnect() {
 
   cached.promise ??= mongoose.connect(uri, {
     bufferCommands: false,
-    dbName: uri.includes("/") ? undefined : "phraseflow-atlas"
+    dbName: getDatabaseName(uri)
   });
 
   cached.conn = await cached.promise;
   return cached.conn;
+}
+
+function getDatabaseName(uri: string) {
+  try {
+    const parsed = new URL(uri);
+    const dbName = parsed.pathname.replace(/^\//, "").trim();
+    return dbName || "phraseflow-atlas";
+  } catch {
+    return "phraseflow-atlas";
+  }
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDayLabel } from "@/lib/dates";
 import { SentenceCard, type SentenceView } from "./SentenceCard";
+import { useI18n } from "./I18nProvider";
 
 type SavedItem = {
   id: string;
@@ -12,6 +13,7 @@ type SavedItem = {
 };
 
 export function SavedSentencesClient() {
+  const { t } = useI18n();
   const [items, setItems] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -45,7 +47,7 @@ export function SavedSentencesClient() {
     <section className="dashboard-content">
       <div className="page-heading">
         <p className="eyebrow">Review space</p>
-        <h1>Saved sentences</h1>
+        <h1>{t("savedSentences")}</h1>
         <p>Your saved sentences are separated by day so reviews stay clear.</p>
       </div>
 

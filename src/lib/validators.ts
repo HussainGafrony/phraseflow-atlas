@@ -1,10 +1,7 @@
 import { z } from "zod";
-import { FREQUENCIES, LEVELS, PROVIDER_KEYS, SUPPORTED_LANGUAGES, TOPICS } from "./constants";
+import { PROVIDER_KEYS, SUPPORTED_LANGUAGES } from "./constants";
 
 const languageValues = SUPPORTED_LANGUAGES.map((language) => language.value) as [string, ...string[]];
-const topicValues = TOPICS as unknown as [string, ...string[]];
-const levelValues = LEVELS as unknown as [string, ...string[]];
-const frequencyValues = FREQUENCIES.map((frequency) => frequency.value) as [string, ...string[]];
 const providerValues = PROVIDER_KEYS as unknown as [string, ...string[]];
 
 export const credentialsSchema = z.object({
@@ -20,9 +17,9 @@ export const createUserSchema = z.object({
 
 export const sentenceRequestSchema = z.object({
   language: z.enum(languageValues),
-  topic: z.enum(topicValues),
-  level: z.enum(levelValues),
-  frequency: z.enum(frequencyValues)
+  topic: z.string().trim().min(2).max(80),
+  level: z.string().trim().min(2).max(80),
+  frequency: z.string().trim().min(2).max(80)
 });
 
 export const saveSentenceSchema = z.object({
@@ -60,4 +57,30 @@ export const landingSentenceSchema = z.object({
       arabicTranslation: z.string().trim().min(2).max(240)
     })
   ).min(4).max(8)
+});
+
+export const setupAdminSchema = z.object({
+  token: z.string().trim().max(200).optional().default(""),
+  username: z.string().trim().min(3).max(40),
+  password: z.string().min(8).max(120)
+});
+
+export const learningOptionsSchema = z.object({
+  options: z
+    .array(
+      z.object({
+        type: z.enum(["topic", "level", "frequency"]),
+        label: z.string().trim().min(2).max(80),
+        value: z.string().trim().max(80).optional().default(""),
+        description: z.string().trim().max(240).optional().default(""),
+        order: z.number().int().min(0).max(999).optional().default(0),
+        isActive: z.boolean().optional().default(true)
+      })
+    )
+    .min(3)
+    .max(80)
+});
+
+export const providerTestSchema = z.object({
+  provider: z.enum(providerValues)
 });
