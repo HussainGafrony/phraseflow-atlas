@@ -1,3 +1,6 @@
+/**
+ * حساب نسبة الجمل المحفوظة من الجمل المسلّمة لكل موضوع، بما فيها المواضيع التي أضافها الأدمن.
+ */
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { requireApiSession } from "@/lib/auth";
@@ -21,22 +24,34 @@ export async function GET() {
     const userObjectId = new mongoose.Types.ObjectId(session.userId);
     const delivered = await SentenceDelivery.aggregate([
       { $match: { userId: userObjectId } },
-      { $group: { _id: "$context.topic", count: { $sum: 1 } } }
+      { $group: { _id: "$context.topic", count: { $sum: 1 } } },
     ]);
 
-    const saved = await SavedSentence.find({ userId: session.userId }).populate("sentenceId").lean();
+    const saved = await SavedSentence.find({ userId: session.userId })
+      .populate("sentenceId")
+      .lean();
     const savedByTopic = new Map<string, number>();
     for (const item of saved) {
       const sentence = item.sentenceId as unknown as { topic?: string };
       if (sentence?.topic) {
-        savedByTopic.set(sentence.topic, (savedByTopic.get(sentence.topic) ?? 0) + 1);
+        savedByTopic.set(
+          sentence.topic,
+          (savedByTopic.get(sentence.topic) ?? 0) + 1,
+        );
       }
     }
 
-    const deliveredByTopic = new Map(delivered.map((item) => [item._id, item.count]));
+    const deliveredByTopic = new Map(
+      delivered.map((item) => [item._id, item.count]),
+    );
 
     const options = await getLearningOptions();
-    const topics = [...new Set([...options.topics.map((item) => item.value), ...deliveredByTopic.keys()])];
+    const topics = [
+      ...new Set([
+        ...options.topics.map((item) => item.value),
+        ...deliveredByTopic.keys(),
+      ]),
+    ];
     return NextResponse.json({
       topics: topics.map((topic) => {
         const total = deliveredByTopic.get(topic) ?? 0;
@@ -45,9 +60,9 @@ export async function GET() {
           topic,
           delivered: total,
           saved: savedCount,
-          percent: total ? Math.round((savedCount / total) * 100) : 0
+          percent: total ? Math.round((savedCount / total) * 100) : 0,
         };
-      })
+      }),
     });
   } catch (error) {
     return handleRouteError(error);

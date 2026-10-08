@@ -1,41 +1,11 @@
+/** لغتا الواجهة فقط. مفاتيح العبارات الإنجليزية داخلية ولا تضيف لغة للواجهة. */
 export const UI_LANGUAGES = [
-  { value: "en", label: "English" },
   { value: "ar", label: "العربية" },
-  { value: "de", label: "Deutsch" },
-  { value: "el", label: "Ελληνικά" }
+  { value: "el", label: "Ελληνικά" },
 ] as const;
-
+export const DEFAULT_UI_LANGUAGE = "ar";
 export type UiLanguage = (typeof UI_LANGUAGES)[number]["value"];
-
 export const dictionary = {
-  en: {
-    startLearning: "Start learning",
-    login: "Login",
-    admin: "Admin",
-    userLogin: "User login",
-    adminLogin: "Admin login",
-    backHome: "Back home",
-    username: "Username",
-    password: "Password",
-    enterDashboard: "Enter dashboard",
-    enterAdmin: "Enter admin panel",
-    todaySentences: "Today’s sentences",
-    savedSentences: "Saved sentences",
-    giveMeSentences: "Give me today’s sentences",
-    language: "Language",
-    topic: "Topic",
-    level: "Level",
-    frequency: "Frequency",
-    listen: "Listen",
-    save: "Save",
-    adminPanel: "Admin panel",
-    users: "Users",
-    unlockCode: "Unlock code",
-    aiProviders: "AI providers",
-    landingSentences: "Landing sentences",
-    learningOptions: "Learning options",
-    setupAdmin: "Setup first admin"
-  },
   ar: {
     startLearning: "ابدأ التعلم",
     login: "دخول",
@@ -62,35 +32,7 @@ export const dictionary = {
     aiProviders: "مزودو الذكاء الاصطناعي",
     landingSentences: "جمل الصفحة الرئيسية",
     learningOptions: "خيارات التعلم",
-    setupAdmin: "إنشاء أول أدمن"
-  },
-  de: {
-    startLearning: "Lernen starten",
-    login: "Login",
-    admin: "Admin",
-    userLogin: "Benutzerlogin",
-    adminLogin: "Admin-Login",
-    backHome: "Zur Startseite",
-    username: "Benutzername",
-    password: "Passwort",
-    enterDashboard: "Zum Dashboard",
-    enterAdmin: "Zum Adminbereich",
-    todaySentences: "Heutige Sätze",
-    savedSentences: "Gespeicherte Sätze",
-    giveMeSentences: "Gib mir heutige Sätze",
-    language: "Sprache",
-    topic: "Thema",
-    level: "Niveau",
-    frequency: "Häufigkeit",
-    listen: "Anhören",
-    save: "Speichern",
-    adminPanel: "Adminbereich",
-    users: "Benutzer",
-    unlockCode: "Freischaltcode",
-    aiProviders: "KI-Anbieter",
-    landingSentences: "Startseitensätze",
-    learningOptions: "Lernoptionen",
-    setupAdmin: "Ersten Admin einrichten"
+    setupAdmin: "إنشاء أول أدمن",
   },
   el: {
     startLearning: "Ξεκίνα μάθηση",
@@ -118,8 +60,35 @@ export const dictionary = {
     aiProviders: "Πάροχοι AI",
     landingSentences: "Προτάσεις αρχικής",
     learningOptions: "Επιλογές μάθησης",
-    setupAdmin: "Ρύθμιση πρώτου admin"
-  }
+    setupAdmin: "Ρύθμιση πρώτου admin",
+  },
 } as const;
-
-export type TranslationKey = keyof typeof dictionary.en;
+export type TranslationKey = keyof typeof dictionary.ar;
+export const sourceKeys: Record<string, TranslationKey> = {
+  "Start learning": "startLearning",
+  Login: "login",
+  Admin: "admin",
+  "User login": "userLogin",
+  "Admin login": "adminLogin",
+  "Back home": "backHome",
+  Username: "username",
+  Password: "password",
+  "Enter dashboard": "enterDashboard",
+  "Enter admin panel": "enterAdmin",
+  "Today’s sentences": "todaySentences",
+  "Saved sentences": "savedSentences",
+  "Give me today’s sentences": "giveMeSentences",
+  Language: "language",
+  Topic: "topic",
+  Level: "level",
+  Frequency: "frequency",
+  Listen: "listen",
+  Save: "save",
+  "Admin panel": "adminPanel",
+  Users: "users",
+  "Unlock code": "unlockCode",
+  "AI providers": "aiProviders",
+  "Landing sentences": "landingSentences",
+  "Learning options": "learningOptions",
+  "Setup first admin": "setupAdmin",
+};

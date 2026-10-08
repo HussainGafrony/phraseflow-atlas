@@ -1,3 +1,6 @@
+/**
+ * التحقق من رمز الأدمن مع حد محاولات مستقل؛ الفتح يخص المستخدم واليوم الحالي ولا يلغي الحد النهائي 20.
+ */
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { requireApiSession } from "@/lib/auth";
@@ -23,9 +26,14 @@ export async function POST(request: Request) {
     await dbConnect();
 
     const limit = await checkRateLimit(`unlock:${session.userId}`, 10, 900);
-    if (!limit.allowed) return jsonError("Too many code attempts. Try again later.", 429);
+    if (!limit.allowed)
+      return jsonError("Too many code attempts. Try again later.", 429, {
+        retryAfter: limit.retryAfter,
+      });
 
-    const unlockCode = await UnlockCode.findOne({ isActive: true }).sort({ updatedAt: -1 });
+    const unlockCode = await UnlockCode.findOne({ isActive: true }).sort({
+      updatedAt: -1,
+    });
     if (!unlockCode || !(await bcrypt.compare(code, unlockCode.codeHash))) {
       return jsonError("Unlock code is incorrect.", 403);
     }
@@ -33,7 +41,7 @@ export async function POST(request: Request) {
     await DailyUsage.findOneAndUpdate(
       { userId: session.userId, dayKey: getDayKey() },
       { $set: { unlocked: true, unlockedAt: new Date() } },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     return NextResponse.json({ ok: true });

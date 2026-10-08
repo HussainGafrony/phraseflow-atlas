@@ -1,3 +1,7 @@
+/**
+ * صفحة محمية بدور الأدمن تضم لوحة إدارة الحسابات والمزوّدين والمحتوى.
+ */
+import { T } from "@/components/I18nProvider";
 import { AdminPanel } from "@/components/AdminPanel";
 import { LogoutButton } from "@/components/LogoutButton";
 import { requirePageSession } from "@/lib/auth";
@@ -13,7 +17,10 @@ export default async function AdminPage() {
       <header className="admin-header">
         <div>
           <span className="brand">{APP_NAME}</span>
-          <h1>Admin panel</h1>
+          <h1>
+            {" "}
+            <T k="Admin panel" />{" "}
+          </h1>
         </div>
         <div className="admin-user">
           <span>{session.username}</span>

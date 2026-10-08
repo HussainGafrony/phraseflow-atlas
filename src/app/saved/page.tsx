@@ -1,3 +1,7 @@
+/**
+ * صفحة مراجعة محفوظات المستخدم؛ التحقق من الجلسة يسبق عرض المحتوى.
+ */
+import { T } from "@/components/I18nProvider";
 import Link from "next/link";
 import { LogoutButton } from "@/components/LogoutButton";
 import { SavedSentencesClient } from "@/components/SavedSentencesClient";
@@ -14,8 +18,14 @@ export default async function SavedPage() {
       <aside className="sidebar">
         <span className="brand">{APP_NAME}</span>
         <nav>
-          <Link href="/dashboard">Today</Link>
-          <Link href="/saved">Saved sentences</Link>
+          <Link href="/dashboard">
+            {" "}
+            <T k="Today" />{" "}
+          </Link>
+          <Link href="/saved">
+            {" "}
+            <T k="Saved sentences" />{" "}
+          </Link>
         </nav>
         <div className="sidebar-footer">
           <span>{session.username}</span>

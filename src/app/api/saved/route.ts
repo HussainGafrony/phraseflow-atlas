@@ -1,3 +1,6 @@
+/**
+ * جلب محفوظات المستخدم المسجل فقط مع بيانات الجمل لعرضها مجمعة بالأيام.
+ */
 import { NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
@@ -44,10 +47,10 @@ export async function GET() {
             frequency: sentence.frequency,
             text: sentence.text,
             arabicTranslation: sentence.arabicTranslation,
-            audioUrl: sentence.audioUrl ?? ""
-          }
+            audioUrl: sentence.audioUrl ?? "",
+          },
         };
-      })
+      }),
     });
   } catch (error) {
     return handleRouteError(error);

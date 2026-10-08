@@ -1,3 +1,6 @@
+/**
+ * القيم الابتدائية وحقول مزوّدي النص. يستطيع الأدمن تغيير الموديل والمفتاح والمسار من الواجهة دون تعديل الكود.
+ */
 import type { ProviderKey } from "../constants";
 
 export type ProviderField = {
@@ -24,36 +27,36 @@ const commonFields: ProviderField[] = [
     label: "API key",
     type: "password",
     placeholder: "Paste provider API key",
-    helper: "Stored encrypted when APP_ENCRYPTION_KEY is configured."
+    helper: "Stored encrypted when APP_ENCRYPTION_KEY is configured.",
   },
   {
     name: "model",
     label: "Model",
     type: "text",
     placeholder: "Model name",
-    helper: "The model used to generate learning sentences."
+    helper: "The model used to generate learning sentences.",
   },
   {
     name: "baseUrl",
     label: "Base URL",
     type: "url",
     placeholder: "https://api.provider.com",
-    helper: "Provider API base URL."
+    helper: "Provider API base URL.",
   },
   {
     name: "textEndpoint",
     label: "Text endpoint",
     type: "text",
     placeholder: "/chat/completions",
-    helper: "Endpoint used for sentence generation."
+    helper: "Endpoint used for sentence generation.",
   },
   {
     name: "audioEndpoint",
     label: "Audio endpoint",
     type: "text",
     placeholder: "/audio/speech",
-    helper: "Optional endpoint used once to create and save audio URLs."
-  }
+    helper: "Optional endpoint used once to create and save audio URLs.",
+  },
 ];
 
 export const providerDefinitions: ProviderDefinition[] = [
@@ -64,7 +67,7 @@ export const providerDefinitions: ProviderDefinition[] = [
     defaultBaseUrl: "https://api.openai.com/v1",
     defaultTextEndpoint: "/chat/completions",
     defaultAudioEndpoint: "/audio/speech",
-    fields: commonFields
+    fields: commonFields,
   },
   {
     provider: "gemini",
@@ -73,7 +76,7 @@ export const providerDefinitions: ProviderDefinition[] = [
     defaultBaseUrl: "https://generativelanguage.googleapis.com/v1beta",
     defaultTextEndpoint: "/models/{model}:generateContent",
     defaultAudioEndpoint: "",
-    fields: commonFields
+    fields: commonFields,
   },
   {
     provider: "claude",
@@ -82,7 +85,7 @@ export const providerDefinitions: ProviderDefinition[] = [
     defaultBaseUrl: "https://api.anthropic.com/v1",
     defaultTextEndpoint: "/messages",
     defaultAudioEndpoint: "",
-    fields: commonFields
+    fields: commonFields,
   },
   {
     provider: "deepseek",
@@ -91,7 +94,7 @@ export const providerDefinitions: ProviderDefinition[] = [
     defaultBaseUrl: "https://api.deepseek.com/v1",
     defaultTextEndpoint: "/chat/completions",
     defaultAudioEndpoint: "",
-    fields: commonFields
+    fields: commonFields,
   },
   {
     provider: "grok",
@@ -100,10 +103,12 @@ export const providerDefinitions: ProviderDefinition[] = [
     defaultBaseUrl: "https://api.x.ai/v1",
     defaultTextEndpoint: "/chat/completions",
     defaultAudioEndpoint: "",
-    fields: commonFields
-  }
+    fields: commonFields,
+  },
 ];
 
 export function getProviderDefinition(provider: ProviderKey) {
-  return providerDefinitions.find((definition) => definition.provider === provider);
+  return providerDefinitions.find(
+    (definition) => definition.provider === provider,
+  );
 }

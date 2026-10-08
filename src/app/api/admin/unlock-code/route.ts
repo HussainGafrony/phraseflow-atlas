@@ -1,3 +1,6 @@
+/**
+ * الأدمن يضبط رمز فتح الدفعتين الإضافيتين؛ الرمز يُحفظ كـ hash ولا يُعاد مكشوفاً من قاعدة البيانات.
+ */
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { requireApiSession } from "@/lib/auth";
@@ -16,10 +19,12 @@ export async function GET() {
     }
 
     await dbConnect();
-    const active = await UnlockCode.findOne({ isActive: true }).sort({ updatedAt: -1 }).lean();
+    const active = await UnlockCode.findOne({ isActive: true })
+      .sort({ updatedAt: -1 })
+      .lean();
     return NextResponse.json({
       hasCode: Boolean(active),
-      updatedAt: active?.updatedAt ?? null
+      updatedAt: active?.updatedAt ?? null,
     });
   } catch (error) {
     return handleRouteError(error);
@@ -39,7 +44,7 @@ export async function PUT(request: Request) {
     await UnlockCode.create({
       codeHash: await bcrypt.hash(code, 12),
       isActive: true,
-      changedBy: session.userId
+      changedBy: session.userId,
     });
 
     return NextResponse.json({ ok: true });
