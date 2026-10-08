@@ -5,14 +5,11 @@ export async function checkRateLimit(key: string, limit: number, windowSeconds: 
   const expiresAt = new Date(now.getTime() + windowSeconds * 1000);
 
   const record = await RateLimit.findOneAndUpdate(
-    {
-      key,
-      $or: [{ expiresAt: { $lte: now } }, { expiresAt: { $gt: now } }]
-    },
+    { key },
     [
       {
         $set: {
-          key,
+          key: { $literal: key },
           count: {
             $cond: [
               { $lte: [{ $ifNull: ["$expiresAt", new Date(0)] }, now] },

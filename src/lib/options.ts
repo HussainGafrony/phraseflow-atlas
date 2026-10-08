@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { FREQUENCIES, LEVELS, TOPICS } from "./constants";
 import { dbConnect } from "./db";
 import { LearningOption } from "@/models/LearningOption";
@@ -68,19 +69,25 @@ export async function getLearningOptions() {
 
 export async function replaceLearningOptions(options: LearningOptionView[]) {
   await dbConnect();
-  await LearningOption.deleteMany({});
-  if (!options.length) {
-    return;
+  const normalized = options.map((option, index) => ({
+    ...option, label: option.label.trim(),
+    value: option.value.trim() || slugifyOption(option.label),
+    description: option.description?.trim() ?? "", order: option.order ?? index
+  }));
+  const keys = normalized.map((option) => `${option.type}:${option.value}`);
+  if (new Set(keys).size !== keys.length || normalized.some((option) => !option.value)) {
+    throw new Error("Learning options must have unique, non-empty values within each list.");
   }
-
-  await LearningOption.insertMany(
-    options.map((option, index) => ({
-      type: option.type,
-      label: option.label.trim(),
-      value: option.value.trim() || slugifyOption(option.label),
-      description: option.description?.trim() ?? "",
-      order: option.order ?? index,
-      isActive: option.isActive
-    }))
-  );
+  for (const type of ["topic", "level", "frequency"]) {
+    if (!normalized.some((option) => option.type === type && option.isActive)) {
+      throw new Error("Each learning list needs at least one active option.");
+    }
+  }
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      await LearningOption.deleteMany({}, { session });
+      await LearningOption.insertMany(normalized, { session });
+    });
+  } finally { await session.endSession(); }
 }

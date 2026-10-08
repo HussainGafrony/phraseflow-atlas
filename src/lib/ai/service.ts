@@ -45,7 +45,7 @@ export async function generateSentences(input: GenerationInput): Promise<Generat
     }
   }
 
-  return generateFallbackSentences(input);
+  throw new Error("No AI provider is available. Ask the admin to configure or test a provider, then try again. Your daily allowance has not been charged.");
 }
 
 async function callProvider(
@@ -101,6 +101,7 @@ function buildEndpoint(baseUrl: string, endpoint: string, model?: string) {
 async function callOpenAICompatible(url: string, apiKey: string, model: string, prompt: string) {
   const response = await fetch(url, {
     method: "POST",
+    signal: AbortSignal.timeout(20000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json"
@@ -129,6 +130,7 @@ async function callGemini(url: string, apiKey: string, prompt: string) {
   const separator = url.includes("?") ? "&" : "?";
   const response = await fetch(`${url}${separator}key=${apiKey}`, {
     method: "POST",
+    signal: AbortSignal.timeout(20000),
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
@@ -148,6 +150,7 @@ async function callGemini(url: string, apiKey: string, prompt: string) {
 async function callClaude(url: string, apiKey: string, model: string, prompt: string) {
   const response = await fetch(url, {
     method: "POST",
+    signal: AbortSignal.timeout(20000),
     headers: {
       "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
@@ -208,36 +211,4 @@ export async function testProviderConnection(providerName: ProviderKey) {
     ok: result.length > 0,
     message: result.length ? "Provider generated a test sentence." : "Provider returned no usable sentence."
   };
-}
-
-function generateFallbackSentences(input: GenerationInput): GeneratedSentence[] {
-  const language = SUPPORTED_LANGUAGES.find((item) => item.value === input.language)?.label ?? input.language;
-  const seed = Date.now().toString().slice(-5);
-
-  return Array.from({ length: input.count }, (_, index) => {
-    const number = index + 1;
-    return {
-      text: fallbackText(input.language, input.topic, input.level, number, seed),
-      arabicTranslation: `جملة تدريبية عن ${input.topic} للمستوى ${input.level} باللغة ${language}.`,
-      sourceProvider: "fallback"
-    };
-  });
-}
-
-function fallbackText(
-  language: LearningLanguage,
-  topic: string,
-  level: string,
-  number: number,
-  seed: string
-) {
-  if (language === "german") {
-    return `Ich uebe ${topic} jeden Tag, Satz ${number} (${level}-${seed}).`;
-  }
-
-  if (language === "greek") {
-    return `Μαθαίνω ${topic} κάθε μέρα, πρόταση ${number} (${level}-${seed}).`;
-  }
-
-  return `I practice ${topic} every day, sentence ${number} (${level}-${seed}).`;
 }

@@ -8,6 +8,8 @@ import { unlockSchema } from "@/lib/validators";
 import { DailyUsage } from "@/models/DailyUsage";
 import { UnlockCode } from "@/models/UnlockCode";
 
+import { checkRateLimit } from "@/lib/rate-limit";
+
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
@@ -19,6 +21,9 @@ export async function POST(request: Request) {
 
     const { code } = unlockSchema.parse(await request.json());
     await dbConnect();
+
+    const limit = await checkRateLimit(`unlock:${session.userId}`, 10, 900);
+    if (!limit.allowed) return jsonError("Too many code attempts. Try again later.", 429);
 
     const unlockCode = await UnlockCode.findOne({ isActive: true }).sort({ updatedAt: -1 });
     if (!unlockCode || !(await bcrypt.compare(code, unlockCode.codeHash))) {
