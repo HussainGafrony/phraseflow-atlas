@@ -1,9 +1,13 @@
 "use client";
 
+/**
+ * تحميل محفوظات المستخدم وتجميعها حسب يوم الحفظ؛ عناوين الأيام تُعرض بلغة الواجهة الحالية.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { formatDayLabel } from "@/lib/dates";
 import { SentenceCard, type SentenceView } from "./SentenceCard";
-import { useI18n } from "./I18nProvider";
+import { useI18n, T } from "./I18nProvider";
 
 type SavedItem = {
   id: string;
@@ -13,7 +17,7 @@ type SavedItem = {
 };
 
 export function SavedSentencesClient() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [items, setItems] = useState<SavedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -32,7 +36,10 @@ export function SavedSentencesClient() {
       setItems(data.saved ?? []);
     }
 
-    load();
+    load().catch(() => {
+      setMessage("Connection failed. Please try again.");
+      setLoading(false);
+    });
   }, []);
 
   const grouped = useMemo(() => {
@@ -46,24 +53,41 @@ export function SavedSentencesClient() {
   return (
     <section className="dashboard-content">
       <div className="page-heading">
-        <p className="eyebrow">Review space</p>
+        <p className="eyebrow">
+          {" "}
+          <T k="Review space" />{" "}
+        </p>
         <h1>{t("savedSentences")}</h1>
-        <p>Your saved sentences are separated by day so reviews stay clear.</p>
+        <p>
+          {" "}
+          <T k="Your saved sentences are separated by day so reviews stay clear." />{" "}
+        </p>
       </div>
 
-      {loading ? <p className="form-message">Loading saved sentences...</p> : null}
-      {message ? <p className="form-message error">{message}</p> : null}
+      {loading ? (
+        <p className="form-message">
+          {" "}
+          <T k="Loading saved sentences..." />{" "}
+        </p>
+      ) : null}
+      {message ? <p className="form-message error">{t(message)}</p> : null}
       {!loading && !items.length ? (
         <div className="empty-state">
-          <h2>No saved sentences yet</h2>
-          <p>Save a sentence from today’s list and it will appear here.</p>
+          <h2>
+            {" "}
+            <T k="No saved sentences yet" />{" "}
+          </h2>
+          <p>
+            {" "}
+            <T k="Save a sentence from today’s list and it will appear here." />{" "}
+          </p>
         </div>
       ) : null}
 
       {Object.entries(grouped).map(([dayKey, savedItems]) => (
         <section className="saved-day" key={dayKey}>
           <div className="day-divider">
-            <span>{formatDayLabel(dayKey)}</span>
+            <span>{formatDayLabel(dayKey, language)}</span>
           </div>
           <div className="sentence-grid">
             {savedItems.map((item) => (

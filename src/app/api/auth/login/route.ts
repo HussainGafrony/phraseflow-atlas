@@ -1,3 +1,6 @@
+/**
+ * دخول الحساب: تحديد محاولات عنوان العميل، التحقق من كلمة المرور والدور، ثم وضع cookie الجلسة.
+ */
 import { NextResponse } from "next/server";
 import { credentialsSchema } from "@/lib/validators";
 import { findUserForLogin, setSessionCookie, verifyPassword } from "@/lib/auth";
@@ -14,9 +17,13 @@ export async function POST(request: Request) {
     const ip = getClientIp(request);
     const limit = await checkRateLimit(`login:${ip}`, 12, 15 * 60);
     if (!limit.allowed) {
-      return jsonError("Too many login attempts. Please try again later.", 429, {
-        retryAfter: limit.retryAfter
-      });
+      return jsonError(
+        "Too many login attempts. Please try again later.",
+        429,
+        {
+          retryAfter: limit.retryAfter,
+        },
+      );
     }
 
     const body = credentialsSchema.parse(await request.json());
@@ -33,12 +40,12 @@ export async function POST(request: Request) {
     await setSessionCookie({
       userId: user._id.toString(),
       username: user.username,
-      role: user.role as "user" | "admin"
+      role: user.role as "user" | "admin",
     });
 
     return NextResponse.json({
       ok: true,
-      redirectTo: user.role === "admin" ? "/admin" : "/dashboard"
+      redirectTo: user.role === "admin" ? "/admin" : "/dashboard",
     });
   } catch (error) {
     return handleRouteError(error);

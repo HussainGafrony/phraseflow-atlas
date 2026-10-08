@@ -1,3 +1,6 @@
+/**
+ * حفظ جملة سبق تسليمها لهذا المستخدم فقط؛ upsert يمنع تكرار المحفوظة ويحتفظ بتاريخ الحفظ الأول.
+ */
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";
@@ -21,23 +24,25 @@ export async function POST(request: Request) {
     const { sentenceId } = saveSentenceSchema.parse(await request.json());
     await dbConnect();
 
-    if (!(await SentenceDelivery.exists({ userId: session.userId, sentenceId }))) {
+    if (
+      !(await SentenceDelivery.exists({ userId: session.userId, sentenceId }))
+    ) {
       return jsonError("Sentence not found in your learning history.", 404);
     }
 
     await SavedSentence.updateOne(
       {
         userId: new mongoose.Types.ObjectId(session.userId),
-        sentenceId: new mongoose.Types.ObjectId(sentenceId)
+        sentenceId: new mongoose.Types.ObjectId(sentenceId),
       },
       {
         $setOnInsert: {
           userId: new mongoose.Types.ObjectId(session.userId),
           sentenceId: new mongoose.Types.ObjectId(sentenceId),
-          dayKey: getDayKey()
-        }
+          dayKey: getDayKey(),
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
 
     return NextResponse.json({ ok: true });

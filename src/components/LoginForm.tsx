@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * نموذج الدخول للمستخدم والأدمن؛ يرسل الدور المتوقع لمنع الدخول من البوابة الخطأ ويعيد تفعيل الزر عند فشل الشبكة.
+ */
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { type TranslationKey } from "@/lib/i18n";
@@ -23,22 +27,28 @@ export function LoginForm({ expectedRole, buttonKey }: LoginFormProps) {
     setLoading(true);
     setMessage("");
 
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password, expectedRole })
-    });
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, expectedRole }),
+      });
 
-    const data = await response.json();
-    setLoading(false);
+      const data = await response.json();
+      setLoading(false);
 
-    if (!response.ok) {
-      setMessage(data.error ?? "Login failed.");
-      return;
+      if (!response.ok) {
+        setMessage(data.error ?? "Login failed.");
+        return;
+      }
+
+      router.push(data.redirectTo);
+      router.refresh();
+    } catch {
+      setMessage("Connection failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    router.push(data.redirectTo);
-    router.refresh();
   }
 
   return (
@@ -62,9 +72,9 @@ export function LoginForm({ expectedRole, buttonKey }: LoginFormProps) {
           required
         />
       </label>
-      {message ? <p className="form-message error">{message}</p> : null}
+      {message ? <p className="form-message error">{t(message)}</p> : null}
       <button className="primary-button" disabled={loading} type="submit">
-        {loading ? "Checking..." : t(buttonKey)}
+        {loading ? t("Checking...") : t(buttonKey)}
       </button>
     </form>
   );

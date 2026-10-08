@@ -1,3 +1,6 @@
+/**
+ * الغلاف المشترك لكل الصفحات: مزود الترجمة ومبدل اللغة. أول عرض يكون بالعربية وباتجاه RTL.
+ */
 import type { Metadata } from "next";
 import "./globals.css";
 import { APP_NAME } from "@/lib/constants";
@@ -6,12 +9,14 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const metadata: Metadata = {
   title: APP_NAME,
-  description: "Daily language learning for German, English, and Greek."
+  description: "تعلّم اللغات بجمل يومية وترجمة عربية ومراجعة محفوظاتك.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="ar" dir="rtl">
       <body>
         <I18nProvider>
           <LanguageSwitcher />

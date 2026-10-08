@@ -1,15 +1,19 @@
 "use client";
 
+/**
+ * واجهة جمل اليوم: اختيار المعايير، استعادة حالة اليوم من السيرفر، طلب دفعات، فك الحصة، حفظ الجمل وإظهار تقدم المواضيع.
+ */
+
 import { useCallback, useEffect, useState } from "react";
 import {
   FREQUENCIES,
   LEVELS,
   SUPPORTED_LANGUAGES,
   TOPICS,
-  DAILY_SENTENCE_LIMIT
+  DAILY_SENTENCE_LIMIT,
 } from "@/lib/constants";
 import { SentenceCard, type SentenceView } from "./SentenceCard";
-import { useI18n } from "./I18nProvider";
+import { useI18n, T } from "./I18nProvider";
 
 type ProgressItem = {
   topic: string;
@@ -39,10 +43,14 @@ export function DashboardClient({ username }: { username: string }) {
   const [needsUnlock, setNeedsUnlock] = useState(false);
   const [savingId, setSavingId] = useState("");
   const [progress, setProgress] = useState<ProgressItem[]>([]);
-  const [topics, setTopics] = useState<LearningOption[]>(TOPICS.map((topic) => ({ label: topic, value: topic })));
-  const [levels, setLevels] = useState<LearningOption[]>(LEVELS.map((item) => ({ label: item, value: item })));
+  const [topics, setTopics] = useState<LearningOption[]>(
+    TOPICS.map((topic) => ({ label: topic, value: topic })),
+  );
+  const [levels, setLevels] = useState<LearningOption[]>(
+    LEVELS.map((item) => ({ label: item, value: item })),
+  );
   const [frequencies, setFrequencies] = useState<LearningOption[]>(
-    FREQUENCIES.map((item) => ({ label: item.label, value: item.value }))
+    FREQUENCIES.map((item) => ({ label: item.label, value: item.value })),
   );
 
   const loadOptions = useCallback(async () => {
@@ -52,9 +60,21 @@ export function DashboardClient({ username }: { username: string }) {
     }
     const data = await response.json();
     setTopics((current) => data.topics ?? current);
-    setTopic((current) => data.topics?.some((item: LearningOption) => item.value === current) ? current : data.topics?.[0]?.value ?? current);
-    setLevel((current) => data.levels?.some((item: LearningOption) => item.value === current) ? current : data.levels?.[0]?.value ?? current);
-    setFrequency((current) => data.frequencies?.some((item: LearningOption) => item.value === current) ? current : data.frequencies?.[0]?.value ?? current);
+    setTopic((current) =>
+      data.topics?.some((item: LearningOption) => item.value === current)
+        ? current
+        : (data.topics?.[0]?.value ?? current),
+    );
+    setLevel((current) =>
+      data.levels?.some((item: LearningOption) => item.value === current)
+        ? current
+        : (data.levels?.[0]?.value ?? current),
+    );
+    setFrequency((current) =>
+      data.frequencies?.some((item: LearningOption) => item.value === current)
+        ? current
+        : (data.frequencies?.[0]?.value ?? current),
+    );
     setLevels((current) => data.levels ?? current);
     setFrequencies((current) => data.frequencies ?? current);
   }, []);
@@ -79,7 +99,11 @@ export function DashboardClient({ username }: { username: string }) {
 
   useEffect(() => {
     Promise.all([loadOptions(), refreshProgress(), restoreToday()])
-      .catch(() => setMessage("Could not load your learning data. Please refresh the page."))
+      .catch(() =>
+        setMessage(
+          "Could not load your learning data. Please refresh the page.",
+        ),
+      )
       .finally(() => setInitializing(false));
   }, [loadOptions, refreshProgress, restoreToday]);
 
@@ -91,7 +115,7 @@ export function DashboardClient({ username }: { username: string }) {
       const response = await fetch("/api/sentences/today", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language, topic, level, frequency })
+        body: JSON.stringify({ language, topic, level, frequency }),
       });
 
       const data = await response.json();
@@ -102,11 +126,15 @@ export function DashboardClient({ username }: { username: string }) {
 
       if (data.status === "retry") {
         await restoreToday();
-        setMessage("Another request updated your daily sentences. Your list has been refreshed.");
+        setMessage(
+          "Another request updated your daily sentences. Your list has been refreshed.",
+        );
         return;
       }
       setRemaining(data.remaining ?? remaining);
-      setNeedsUnlock(Boolean(data.needsUnlock) || data.status === "unlock-required");
+      setNeedsUnlock(
+        Boolean(data.needsUnlock) || data.status === "unlock-required",
+      );
 
       if (data.status === "limit-reached") {
         setMessage("You reached your 20 sentences for today.");
@@ -119,7 +147,9 @@ export function DashboardClient({ username }: { username: string }) {
       }
 
       setSentences((current) => [...current, ...(data.sentences ?? [])]);
-      setMessage(data.sentences?.length ? "" : "No fresh sentences were generated yet.");
+      setMessage(
+        data.sentences?.length ? "" : "No fresh sentences were generated yet.",
+      );
       await refreshProgress();
     } catch {
       setMessage("Connection failed. Please try again.");
@@ -134,7 +164,7 @@ export function DashboardClient({ username }: { username: string }) {
       const response = await fetch("/api/unlock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: unlockCode })
+        body: JSON.stringify({ code: unlockCode }),
       });
       const data = await response.json();
 
@@ -157,7 +187,7 @@ export function DashboardClient({ username }: { username: string }) {
       const response = await fetch("/api/sentences/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sentenceId })
+        body: JSON.stringify({ sentenceId }),
       });
 
       if (!response.ok) {
@@ -165,7 +195,9 @@ export function DashboardClient({ username }: { username: string }) {
         return;
       }
 
-      setSentences((current) => current.filter((sentence) => sentence.id !== sentenceId));
+      setSentences((current) =>
+        current.filter((sentence) => sentence.id !== sentenceId),
+      );
       await refreshProgress();
     } catch {
       setMessage("Connection failed. Please try again.");
@@ -177,48 +209,66 @@ export function DashboardClient({ username }: { username: string }) {
   return (
     <section className="dashboard-content">
       <div className="page-heading">
-        <p className="eyebrow">Welcome, {username}</p>
+        <p className="eyebrow">
+          {" "}
+          <T k="Welcome," /> {username}
+        </p>
         <h1>{t("todaySentences")}</h1>
-        <p>Pick your learning path and request up to 20 fresh sentences per day.</p>
+        <p>
+          {" "}
+          <T k="Pick your learning path and request up to 20 fresh sentences per day." />{" "}
+        </p>
       </div>
 
       <div className="control-panel">
         <label>
           {t("language")}
-          <select value={language} onChange={(event) => setLanguage(event.target.value)}>
+          <select
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+          >
             {SUPPORTED_LANGUAGES.map((item) => (
               <option value={item.value} key={item.value}>
-                {item.label}
+                {t(item.label)}
               </option>
             ))}
           </select>
         </label>
         <label>
           {t("topic")}
-          <select value={topic} onChange={(event) => setTopic(event.target.value)}>
+          <select
+            value={topic}
+            onChange={(event) => setTopic(event.target.value)}
+          >
             {topics.map((item) => (
               <option value={item.value} key={item.value}>
-                {item.label}
+                {t(item.label)}
               </option>
             ))}
           </select>
         </label>
         <label>
           {t("level")}
-          <select value={level} onChange={(event) => setLevel(event.target.value)}>
+          <select
+            value={level}
+            onChange={(event) => setLevel(event.target.value)}
+          >
             {levels.map((item) => (
               <option value={item.value} key={item.value}>
-                {item.label}
+                {t(item.label)}
               </option>
             ))}
           </select>
         </label>
         <label>
           {t("frequency")}
-          <select value={frequency} onChange={(event) => setFrequency(event.target.value)}>
+          <select
+            value={frequency}
+            onChange={(event) => setFrequency(event.target.value)}
+          >
             {frequencies.map((item) => (
               <option value={item.value} key={item.value}>
-                {item.label}
+                {t(item.label)}
               </option>
             ))}
           </select>
@@ -226,10 +276,17 @@ export function DashboardClient({ username }: { username: string }) {
       </div>
 
       <div className="action-row">
-        <button className="primary-button" type="button" onClick={getSentences} disabled={initializing || loading || remaining <= 0 || needsUnlock}>
-          {loading ? "Generating..." : t("giveMeSentences")}
+        <button
+          className="primary-button"
+          type="button"
+          onClick={getSentences}
+          disabled={initializing || loading || remaining <= 0 || needsUnlock}
+        >
+          {loading ? t("Generating...") : t("giveMeSentences")}
         </button>
-        <span>{remaining} sentences left today</span>
+        <span>
+          {remaining} <T k="sentences left today" />{" "}
+        </span>
       </div>
 
       {needsUnlock ? (
@@ -237,28 +294,39 @@ export function DashboardClient({ username }: { username: string }) {
           <input
             value={unlockCode}
             onChange={(event) => setUnlockCode(event.target.value)}
-            placeholder="Admin code"
+            placeholder={t("Admin code")}
           />
-          <button className="secondary-button" type="button" onClick={unlockToday}>
-            Unlock
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={unlockToday}
+          >
+            {" "}
+            <T k="Unlock" />{" "}
           </button>
         </div>
       ) : null}
 
-      {message ? <p className="form-message">{message}</p> : null}
+      {message ? <p className="form-message">{t(message)}</p> : null}
 
       <section className="progress-grid" aria-label="Topic progress">
         {progress.map((item) => (
           <button
             className="progress-pill"
             type="button"
-            key={item.topic}
-            title={`${item.percent}% saved from delivered sentences`}
+            key={t(item.topic)}
+            title={`${item.percent}%`}
             aria-expanded={selectedProgress === item.topic}
-            onClick={() => setSelectedProgress((current) => current === item.topic ? null : item.topic)}
+            onClick={() =>
+              setSelectedProgress((current) =>
+                current === item.topic ? null : item.topic,
+              )
+            }
           >
-            <span>{item.topic}</span>
-            <strong>{selectedProgress === item.topic ? `${item.percent}%` : "🌱"}</strong>
+            <span>{t(item.topic)}</span>
+            <strong>
+              {selectedProgress === item.topic ? `${item.percent}%` : "🌱"}
+            </strong>
             <small>
               {item.saved}/{item.delivered || 0}
             </small>

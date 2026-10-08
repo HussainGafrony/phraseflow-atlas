@@ -1,3 +1,6 @@
+/**
+ * قراءة القوائم النشطة والمعطلة للأدمن، والتحقق من البيانات قبل استبدال الإعدادات بمعاملة ذرية.
+ */
 import { NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { handleRouteError, jsonError } from "@/lib/http";
@@ -13,7 +16,7 @@ export async function GET() {
       return jsonError("Unauthorized.", 401);
     }
 
-    return NextResponse.json(await getLearningOptions());
+    return NextResponse.json(await getLearningOptions(true));
   } catch (error) {
     return handleRouteError(error);
   }

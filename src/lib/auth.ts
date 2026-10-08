@@ -1,3 +1,6 @@
+/**
+ * جلسات الدخول: تشفير كلمات المرور بـ bcrypt، توقيع JWT داخل cookie آمن، وفصل صلاحيات الأدمن عن المستخدم في الصفحات والـ API.
+ */
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
@@ -34,7 +37,7 @@ export async function verifyPassword(password: string, passwordHash: string) {
 export async function createSessionToken(session: AppSession) {
   return new SignJWT({
     username: session.username,
-    role: session.role
+    role: session.role,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(session.userId)
@@ -52,7 +55,7 @@ export async function setSessionCookie(session: AppSession) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7
+    maxAge: 60 * 60 * 24 * 7,
   });
 }
 
@@ -77,7 +80,7 @@ export async function getSession(): Promise<AppSession | null> {
     return {
       userId: payload.sub,
       username: String(payload.username),
-      role: payload.role as SessionRole
+      role: payload.role as SessionRole,
     };
   } catch {
     return null;

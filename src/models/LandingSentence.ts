@@ -1,3 +1,6 @@
+/**
+ * جمل الصفحة العامة وربط كل مجموعة بأسبوعها وحالة ظهورها.
+ */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
 const landingSentenceSchema = new Schema(
@@ -6,15 +9,20 @@ const landingSentenceSchema = new Schema(
     text: { type: String, required: true },
     arabicTranslation: { type: String, required: true },
     activeFromWeek: { type: String, required: true, index: true },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export type LandingSentenceDocument = InferSchemaType<typeof landingSentenceSchema> & {
+export type LandingSentenceDocument = InferSchemaType<
+  typeof landingSentenceSchema
+> & {
   _id: mongoose.Types.ObjectId;
 };
 
 export const LandingSentence: Model<LandingSentenceDocument> =
   mongoose.models.LandingSentence ??
-  mongoose.model<LandingSentenceDocument>("LandingSentence", landingSentenceSchema);
+  mongoose.model<LandingSentenceDocument>(
+    "LandingSentence",
+    landingSentenceSchema,
+  );

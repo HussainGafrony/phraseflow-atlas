@@ -1,3 +1,6 @@
+/**
+ * اتصال MongoDB يُعاد استخدامه بين الطلبات لتجنب فتح اتصال جديد كل مرة. فشل الاتصال يمسح الوعد المخزن ليسمح بالمحاولة التالية.
+ */
 import mongoose from "mongoose";
 
 type MongooseCache = {
@@ -12,7 +15,7 @@ declare global {
 
 const cached: MongooseCache = globalThis.mongooseCache ?? {
   conn: null,
-  promise: null
+  promise: null,
 };
 
 if (!globalThis.mongooseCache) {
@@ -26,23 +29,32 @@ export async function dbConnect() {
 
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    throw new Error("MONGODB_URI is missing. Add it to .env.local or Vercel env vars.");
+    throw new Error(
+      "MONGODB_URI is missing. Add it to .env.local or Vercel env vars.",
+    );
   }
 
   cached.promise ??= mongoose.connect(uri, {
     bufferCommands: false,
-    dbName: getDatabaseName(uri)
+    dbName: getDatabaseName(uri),
   });
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    throw error;
+  }
 }
 
-function getDatabaseName(uri: string) {
+export function getDatabaseName(uri: string) {
+  if (process.env.MONGODB_DB_NAME?.trim())
+    return process.env.MONGODB_DB_NAME.trim();
   try {
     const parsed = new URL(uri);
     const dbName = parsed.pathname.replace(/^\//, "").trim();
-    return dbName || "phraseflow-atlas";
+    return decodeURIComponent(dbName) || "phraseflow-atlas";
   } catch {
     return "phraseflow-atlas";
   }

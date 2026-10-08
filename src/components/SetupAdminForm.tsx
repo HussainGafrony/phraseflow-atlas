@@ -1,8 +1,12 @@
 "use client";
 
+/**
+ * تهيئة أول أدمن فقط: يقرأ حالة التهيئة ثم يرسل الرمز وبيانات الحساب. السيرفر هو المسؤول عن إغلاق التهيئة بعد أول حساب.
+ */
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useI18n } from "./I18nProvider";
+import { useI18n, T } from "./I18nProvider";
 
 export function SetupAdminForm() {
   const router = useRouter();
@@ -19,11 +23,14 @@ export function SetupAdminForm() {
     async function loadStatus() {
       const response = await fetch("/api/admin/setup");
       const data = await response.json();
+      if (!response.ok) throw new Error();
       setSetupAvailable(Boolean(data.setupAvailable));
       setTokenRequired(Boolean(data.tokenRequired));
     }
 
-    loadStatus();
+    loadStatus().catch(() =>
+      setMessage("Connection failed. Please try again."),
+    );
   }, []);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -31,38 +38,60 @@ export function SetupAdminForm() {
     setLoading(true);
     setMessage("");
 
-    const response = await fetch("/api/admin/setup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, username, password })
-    });
-    const data = await response.json();
-    setLoading(false);
+    try {
+      const response = await fetch("/api/admin/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, username, password }),
+      });
+      const data = await response.json();
+      setLoading(false);
 
-    if (!response.ok) {
-      setMessage(data.error ?? "Setup failed.");
-      return;
+      if (!response.ok) {
+        setMessage(data.error ?? "Setup failed.");
+        return;
+      }
+
+      setMessage("Admin created. Redirecting to login...");
+      setTimeout(() => router.push("/admin/login"), 800);
+    } catch {
+      setMessage("Connection failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setMessage("Admin created. Redirecting to login...");
-    setTimeout(() => router.push("/admin/login"), 800);
   }
 
   if (setupAvailable === false) {
-    return <p className="form-message">Admin setup is already complete.</p>;
+    return (
+      <p className="form-message">
+        {" "}
+        <T k="Admin setup is already complete." />{" "}
+      </p>
+    );
   }
 
   return (
     <form className="stack-form" onSubmit={submit}>
       {tokenRequired ? (
         <label>
-          Setup token
-          <input value={token} onChange={(event) => setToken(event.target.value)} required />
+          {" "}
+          <T k="Setup token" />{" "}
+          <input
+            type="password"
+            autoComplete="off"
+            value={token}
+            onChange={(event) => setToken(event.target.value)}
+            required
+          />
         </label>
       ) : null}
       <label>
         {t("username")}
-        <input value={username} onChange={(event) => setUsername(event.target.value)} required />
+        <input
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+          required
+        />
       </label>
       <label>
         {t("password")}
@@ -74,9 +103,13 @@ export function SetupAdminForm() {
           required
         />
       </label>
-      {message ? <p className="form-message">{message}</p> : null}
-      <button className="primary-button" type="submit" disabled={loading || setupAvailable === null}>
-        {loading ? "Creating..." : t("setupAdmin")}
+      {message ? <p className="form-message">{t(message)}</p> : null}
+      <button
+        className="primary-button"
+        type="submit"
+        disabled={loading || setupAvailable === null}
+      >
+        {loading ? t("Creating...") : t("setupAdmin")}
       </button>
     </form>
   );

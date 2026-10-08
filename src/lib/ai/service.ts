@@ -1,3 +1,6 @@
+/**
+ * استدعاء مزوّدي النص بالترتيب، وتحليل JSON والتحقق من الجمل. اختبار المزوّد يتصل به وحده دون التحول لمزوّد بديل.
+ */
 import { z } from "zod";
 import type { LearningLanguage, ProviderKey } from "../constants";
 import { SUPPORTED_LANGUAGES } from "../constants";
@@ -23,13 +26,17 @@ const generatedSchema = z.object({
   sentences: z.array(
     z.object({
       text: z.string().min(2),
-      arabicTranslation: z.string().min(2)
-    })
-  )
+      arabicTranslation: z.string().min(2),
+    }),
+  ),
 });
 
-export async function generateSentences(input: GenerationInput): Promise<GeneratedSentence[]> {
-  const providers = await AIProvider.find({ enabled: true }).sort({ priority: 1 }).lean();
+export async function generateSentences(
+  input: GenerationInput,
+): Promise<GeneratedSentence[]> {
+  const providers = await AIProvider.find({ enabled: true })
+    .sort({ priority: 1 })
+    .lean();
 
   for (const provider of providers) {
     try {
@@ -37,7 +44,7 @@ export async function generateSentences(input: GenerationInput): Promise<Generat
       if (result.length) {
         return result.map((sentence) => ({
           ...sentence,
-          sourceProvider: provider.provider as ProviderKey
+          sourceProvider: provider.provider as ProviderKey,
         }));
       }
     } catch (error) {
@@ -45,7 +52,9 @@ export async function generateSentences(input: GenerationInput): Promise<Generat
     }
   }
 
-  throw new Error("No AI provider is available. Ask the admin to configure or test a provider, then try again. Your daily allowance has not been charged.");
+  throw new Error(
+    "No AI provider is available. Ask the admin to configure or test a provider, then try again. Your daily allowance has not been charged.",
+  );
 }
 
 async function callProvider(
@@ -56,7 +65,7 @@ async function callProvider(
     textEndpoint?: string;
     encryptedApiKey?: string;
   },
-  input: GenerationInput
+  input: GenerationInput,
 ) {
   const apiKey = decryptSecret(provider.encryptedApiKey);
   if (!apiKey || !provider.baseUrl || !provider.textEndpoint) {
@@ -64,21 +73,37 @@ async function callProvider(
   }
 
   const prompt = buildPrompt(input);
-  const url = buildEndpoint(provider.baseUrl, provider.textEndpoint, provider.model);
+  const url = buildEndpoint(
+    provider.baseUrl,
+    provider.textEndpoint,
+    provider.model,
+  );
 
   if (provider.provider === "gemini") {
     return callGemini(url, apiKey, prompt);
   }
 
   if (provider.provider === "claude") {
-    return callClaude(url, apiKey, provider.model || "claude-3-5-sonnet-latest", prompt);
+    return callClaude(
+      url,
+      apiKey,
+      provider.model || "claude-3-5-sonnet-latest",
+      prompt,
+    );
   }
 
-  return callOpenAICompatible(url, apiKey, provider.model || "gpt-4o-mini", prompt);
+  return callOpenAICompatible(
+    url,
+    apiKey,
+    provider.model || "gpt-4o-mini",
+    prompt,
+  );
 }
 
 function buildPrompt(input: GenerationInput) {
-  const language = SUPPORTED_LANGUAGES.find((item) => item.value === input.language)?.label ?? input.language;
+  const language =
+    SUPPORTED_LANGUAGES.find((item) => item.value === input.language)?.label ??
+    input.language;
 
   return [
     "You generate language-learning sentences.",
@@ -88,23 +113,30 @@ function buildPrompt(input: GenerationInput) {
     `Frequency band: ${input.frequency}.`,
     `Return exactly ${input.count} fresh sentences that are not in this avoid list: ${input.avoid.join(" | ")}.`,
     "Each sentence must be natural, short, useful, and translated into Arabic.",
-    "Return JSON only in this format: {\"sentences\":[{\"text\":\"...\",\"arabicTranslation\":\"...\"}]}."
+    'Return JSON only in this format: {"sentences":[{"text":"...","arabicTranslation":"..."}]}.',
   ].join("\n");
 }
 
 function buildEndpoint(baseUrl: string, endpoint: string, model?: string) {
   const normalizedBase = baseUrl.replace(/\/$/, "");
-  const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const normalizedEndpoint = endpoint.startsWith("/")
+    ? endpoint
+    : `/${endpoint}`;
   return `${normalizedBase}${normalizedEndpoint.replace("{model}", model ?? "")}`;
 }
 
-async function callOpenAICompatible(url: string, apiKey: string, model: string, prompt: string) {
+async function callOpenAICompatible(
+  url: string,
+  apiKey: string,
+  model: string,
+  prompt: string,
+) {
   const response = await fetch(url, {
     method: "POST",
     signal: AbortSignal.timeout(20000),
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       model,
@@ -112,9 +144,9 @@ async function callOpenAICompatible(url: string, apiKey: string, model: string, 
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: "Return compact valid JSON only." },
-        { role: "user", content: prompt }
-      ]
-    })
+        { role: "user", content: prompt },
+      ],
+    }),
   });
 
   if (!response.ok) {
@@ -134,8 +166,8 @@ async function callGemini(url: string, apiKey: string, prompt: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json" }
-    })
+      generationConfig: { responseMimeType: "application/json" },
+    }),
   });
 
   if (!response.ok) {
@@ -147,20 +179,25 @@ async function callGemini(url: string, apiKey: string, prompt: string) {
   return parseProviderJson(content);
 }
 
-async function callClaude(url: string, apiKey: string, model: string, prompt: string) {
+async function callClaude(
+  url: string,
+  apiKey: string,
+  model: string,
+  prompt: string,
+) {
   const response = await fetch(url, {
     method: "POST",
     signal: AbortSignal.timeout(20000),
     headers: {
       "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       model,
       max_tokens: 1200,
-      messages: [{ role: "user", content: prompt }]
-    })
+      messages: [{ role: "user", content: prompt }],
+    }),
   });
 
   if (!response.ok) {
@@ -168,7 +205,9 @@ async function callClaude(url: string, apiKey: string, model: string, prompt: st
   }
 
   const data = await response.json();
-  const content = data.content?.find((item: { type: string; text?: string }) => item.type === "text")?.text;
+  const content = data.content?.find(
+    (item: { type: string; text?: string }) => item.type === "text",
+  )?.text;
   return parseProviderJson(content);
 }
 
@@ -194,8 +233,18 @@ function parseProviderJson(content: unknown) {
 
 export async function testProviderConnection(providerName: ProviderKey) {
   const provider = await AIProvider.findOne({ provider: providerName }).lean();
-  if (!provider?.enabled) {
-    return { ok: false, message: "Provider is not enabled." };
+  // الاختبار يتصل بهذا المزوّد وحده حتى لو لم يُفعّل ضمن ترتيب التوليد بعد.
+  // لا نستخدم fallback هنا، كي لا يظهر المفتاح المعطّل كأنه ناجح.
+  if (
+    !provider?.encryptedApiKey ||
+    !provider.baseUrl ||
+    !provider.model ||
+    !provider.textEndpoint
+  ) {
+    return {
+      ok: false,
+      message: "Complete the API key, model, base URL, and endpoint first.",
+    };
   }
 
   const result = await callProvider(provider, {
@@ -204,11 +253,13 @@ export async function testProviderConnection(providerName: ProviderKey) {
     level: "Beginner",
     frequency: "most-common",
     count: 1,
-    avoid: []
+    avoid: [],
   });
 
   return {
     ok: result.length > 0,
-    message: result.length ? "Provider generated a test sentence." : "Provider returned no usable sentence."
+    message: result.length
+      ? "Provider generated a test sentence."
+      : "Provider returned no usable sentence.",
   };
 }

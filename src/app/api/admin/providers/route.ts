@@ -1,3 +1,6 @@
+/**
+ * قراءة إعدادات المزوّدين دون المفاتيح السرية، وحفظ المفاتيح مشفرة. ترك حقل المفتاح فارغاً يحافظ على المفتاح الحالي.
+ */
 import { NextResponse } from "next/server";
 import { providerDefinitions } from "@/lib/ai/provider-definitions";
 import { encryptSecret } from "@/lib/crypto";
@@ -18,7 +21,9 @@ export async function GET() {
 
     await dbConnect();
     const saved = await AIProvider.find({}).lean();
-    const savedMap = new Map(saved.map((provider) => [provider.provider, provider]));
+    const savedMap = new Map(
+      saved.map((provider) => [provider.provider, provider]),
+    );
 
     return NextResponse.json({
       definitions: providerDefinitions,
@@ -31,11 +36,13 @@ export async function GET() {
           priority: provider?.priority ?? index + 1,
           model: provider?.model || definition.defaultModel,
           baseUrl: provider?.baseUrl || definition.defaultBaseUrl,
-          textEndpoint: provider?.textEndpoint || definition.defaultTextEndpoint,
-          audioEndpoint: provider?.audioEndpoint || definition.defaultAudioEndpoint,
-          hasApiKey: Boolean(provider?.encryptedApiKey)
+          textEndpoint:
+            provider?.textEndpoint || definition.defaultTextEndpoint,
+          audioEndpoint:
+            provider?.audioEndpoint || definition.defaultAudioEndpoint,
+          hasApiKey: Boolean(provider?.encryptedApiKey),
         };
-      })
+      }),
     });
   } catch (error) {
     return handleRouteError(error);
@@ -59,7 +66,7 @@ export async function PUT(request: Request) {
         model: incoming.model,
         baseUrl: incoming.baseUrl,
         textEndpoint: incoming.textEndpoint,
-        audioEndpoint: incoming.audioEndpoint
+        audioEndpoint: incoming.audioEndpoint,
       };
 
       if (incoming.apiKey) {
@@ -69,7 +76,7 @@ export async function PUT(request: Request) {
       await AIProvider.updateOne(
         { provider: incoming.provider },
         { $set: update },
-        { upsert: true }
+        { upsert: true },
       );
     }
 

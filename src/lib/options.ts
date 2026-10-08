@@ -1,3 +1,6 @@
+/**
+ * قراءة المواضيع والمستويات والشيوع، مع افتراضيات أول تشغيل. التعديل يتحقق من القيم ويحفظ القوائم كلها بمعاملة واحدة.
+ */
 import mongoose from "mongoose";
 import { FREQUENCIES, LEVELS, TOPICS } from "./constants";
 import { dbConnect } from "./db";
@@ -20,22 +23,22 @@ export const defaultLearningOptions: LearningOptionView[] = [
     label: topic,
     value: topic,
     order: index,
-    isActive: true
+    isActive: true,
   })),
   ...LEVELS.map((level, index) => ({
     type: "level" as const,
     label: level,
     value: level,
     order: index,
-    isActive: true
+    isActive: true,
   })),
   ...FREQUENCIES.map((frequency, index) => ({
     type: "frequency" as const,
     label: frequency.label,
     value: frequency.value,
     order: index,
-    isActive: true
-  }))
+    isActive: true,
+  })),
 ];
 
 export function slugifyOption(value: string) {
@@ -46,9 +49,13 @@ export function slugifyOption(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export async function getLearningOptions() {
+export async function getLearningOptions(includeInactive = false) {
   await dbConnect();
-  const saved = await LearningOption.find({ isActive: true }).sort({ type: 1, order: 1, label: 1 }).lean();
+  const saved = await LearningOption.find(
+    includeInactive ? {} : { isActive: true },
+  )
+    .sort({ type: 1, order: 1, label: 1 })
+    .lean();
   const options = saved.length
     ? saved.map((option) => ({
         type: option.type as OptionType,
@@ -56,27 +63,34 @@ export async function getLearningOptions() {
         value: option.value,
         description: option.description,
         order: option.order,
-        isActive: option.isActive
+        isActive: option.isActive,
       }))
     : defaultLearningOptions;
 
   return {
     topics: options.filter((option) => option.type === "topic"),
     levels: options.filter((option) => option.type === "level"),
-    frequencies: options.filter((option) => option.type === "frequency")
+    frequencies: options.filter((option) => option.type === "frequency"),
   };
 }
 
 export async function replaceLearningOptions(options: LearningOptionView[]) {
   await dbConnect();
   const normalized = options.map((option, index) => ({
-    ...option, label: option.label.trim(),
+    ...option,
+    label: option.label.trim(),
     value: option.value.trim() || slugifyOption(option.label),
-    description: option.description?.trim() ?? "", order: option.order ?? index
+    description: option.description?.trim() ?? "",
+    order: option.order ?? index,
   }));
   const keys = normalized.map((option) => `${option.type}:${option.value}`);
-  if (new Set(keys).size !== keys.length || normalized.some((option) => !option.value)) {
-    throw new Error("Learning options must have unique, non-empty values within each list.");
+  if (
+    new Set(keys).size !== keys.length ||
+    normalized.some((option) => !option.value)
+  ) {
+    throw new Error(
+      "Learning options must have unique, non-empty values within each list.",
+    );
   }
   for (const type of ["topic", "level", "frequency"]) {
     if (!normalized.some((option) => option.type === type && option.isActive)) {
@@ -89,5 +103,7 @@ export async function replaceLearningOptions(options: LearningOptionView[]) {
       await LearningOption.deleteMany({}, { session });
       await LearningOption.insertMany(normalized, { session });
     });
-  } finally { await session.endSession(); }
+  } finally {
+    await session.endSession();
+  }
 }

@@ -1,3 +1,6 @@
+/**
+ * إعدادات مزوّد نص واحد: الأولوية والتفعيل والموديل والمسارات والمفتاح المشفر.
+ */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
 const aiProviderSchema = new Schema(
@@ -6,7 +9,7 @@ const aiProviderSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      enum: ["openai", "gemini", "claude", "deepseek", "grok"]
+      enum: ["openai", "gemini", "claude", "deepseek", "grok"],
     },
     enabled: { type: Boolean, default: false },
     priority: { type: Number, default: 10 },
@@ -14,9 +17,9 @@ const aiProviderSchema = new Schema(
     baseUrl: { type: String, default: "" },
     textEndpoint: { type: String, default: "" },
     audioEndpoint: { type: String, default: "" },
-    encryptedApiKey: { type: String, default: "" }
+    encryptedApiKey: { type: String, default: "" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export type AIProviderDocument = InferSchemaType<typeof aiProviderSchema> & {
@@ -24,4 +27,5 @@ export type AIProviderDocument = InferSchemaType<typeof aiProviderSchema> & {
 };
 
 export const AIProvider: Model<AIProviderDocument> =
-  mongoose.models.AIProvider ?? mongoose.model<AIProviderDocument>("AIProvider", aiProviderSchema);
+  mongoose.models.AIProvider ??
+  mongoose.model<AIProviderDocument>("AIProvider", aiProviderSchema);

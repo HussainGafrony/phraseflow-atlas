@@ -13,7 +13,7 @@ Daily sentence learning app for German, English, and Greek with Arabic translati
 - Admin panel for users, unlock code, AI provider settings, and landing sentences.
 - First-admin setup page at `/admin/setup` protected by `ADMIN_SETUP_TOKEN`.
 - Editable topics, levels, and frequency options from the admin panel.
-- Basic UI language switcher for English, Arabic, German, and Greek.
+- Arabic and Greek UI, with Arabic as the default and right-to-left support.
 - MongoDB models ready for MongoDB Atlas.
 - AI provider settings for OpenAI, Gemini, Claude, DeepSeek, and Grok.
 
@@ -61,10 +61,19 @@ AI provider secrets are entered from `/admin` in the AI providers tab. The API k
 
 ## Audio
 
-Each sentence has an `audioUrl` field. If an enabled provider has an audio endpoint that returns `{ "audioUrl": "..." }`, the app saves that link once. Until a real audio service is connected, the Listen button falls back to the browser speech engine.
+The admin Audio and storage tab configures an OpenAI-compatible speech service and a **private** Vercel Blob store. API keys and the Blob token are encrypted in MongoDB. A dedicated audio model and voice are separate from the text model. Use Save and test audio to generate, store, and play a real sample.
 
-## Verification
+Audio files are cached by text/language/model/voice. MongoDB stores the asset record; the application serves a stable authenticated audio URL. Missing audio can be generated on first playback. Without configured credentials the UI identifies its device-voice fallback.
 
-Run `node --test scripts/test-sentence-flow.cjs` for allowance and concurrency regression tests (mock database boundaries), followed by `npm run lint` and `npm run build`.
+## Configuration
 
-Daily delivery accounting and learning-option replacement use MongoDB transactions, supported by MongoDB Atlas. Test these operations against the configured Atlas database before accepting the production release. Refreshing the dashboard restores today's unsaved sentences and remaining allowance from the server.
+- Database name: `MONGODB_DB_NAME` overrides the URI database; otherwise the URI path is used, falling back to `phraseflow-atlas`.
+- `ADMIN_SETUP_TOKEN`: required for production first-admin setup; the setup endpoint closes after an admin exists.
+- `CRON_SECRET`: protects the daily scheduled check that rotates public sentences weekly. A curated weekly fallback also works on page access without AI keys.
+- Optional `BLOB_READ_WRITE_TOKEN`: private store token; can instead be entered in the admin audio settings.
+
+## Verification and code guide
+
+Run `npm test`, `npm run lint`, and `npm run build`. Tests mock MongoDB, AI providers, and Blob; live credentials and MongoDB Atlas transaction verification are still required before production acceptance.
+
+See [CODE_GUIDE.md](CODE_GUIDE.md) for the Arabic feature guide, data flow, configuration, and rate limits. Feature modules contain Arabic comments.

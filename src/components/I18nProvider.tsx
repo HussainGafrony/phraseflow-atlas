@@ -1,12 +1,24 @@
 "use client";
 
+/**
+ * حالة لغة الواجهة المشتركة بين الصفحات. العربية افتراضية واليونانية اختيار ثانٍ؛ يُحفظ الاختيار محلياً ويُضبط اتجاه الصفحة RTL/LTR.
+ */
+
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { dictionary, UI_LANGUAGES, type TranslationKey, type UiLanguage } from "@/lib/i18n";
+import { uiPhrases } from "@/lib/ui-phrases";
+import {
+  dictionary,
+  UI_LANGUAGES,
+  DEFAULT_UI_LANGUAGE,
+  sourceKeys,
+  type TranslationKey,
+  type UiLanguage,
+} from "@/lib/i18n";
 
 type I18nContextValue = {
   language: UiLanguage;
   setLanguage: (language: UiLanguage) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: string) => string;
 };
 
 const I18nContext = createContext<I18nContextValue | null>(null);
@@ -17,20 +29,33 @@ function applyDocumentLanguage(language: UiLanguage) {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<UiLanguage>("en");
+  const [language, setLanguageState] =
+    useState<UiLanguage>(DEFAULT_UI_LANGUAGE);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("phraseflow-ui-language") as UiLanguage | null;
-    const nextLanguage = saved && UI_LANGUAGES.some((item) => item.value === saved) ? saved : "en";
-    if (nextLanguage !== language) {
-      setLanguageState(nextLanguage);
+    let saved: UiLanguage | null = null;
+    try {
+      saved = window.localStorage.getItem(
+        "phraseflow-ui-language",
+      ) as UiLanguage | null;
+    } catch {
+      /* Storage can be unavailable in private browsers. */
     }
+    const nextLanguage =
+      saved && UI_LANGUAGES.some((item) => item.value === saved)
+        ? saved
+        : DEFAULT_UI_LANGUAGE;
+    setLanguageState(nextLanguage);
     applyDocumentLanguage(nextLanguage);
-  }, [language]);
+  }, []);
 
   function setLanguage(nextLanguage: UiLanguage) {
     setLanguageState(nextLanguage);
-    window.localStorage.setItem("phraseflow-ui-language", nextLanguage);
+    try {
+      window.localStorage.setItem("phraseflow-ui-language", nextLanguage);
+    } catch {
+      /* Keep the current session language. */
+    }
     applyDocumentLanguage(nextLanguage);
   }
 
@@ -38,9 +63,20 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     () => ({
       language,
       setLanguage,
-      t: (key: TranslationKey) => dictionary[language][key] ?? dictionary.en[key]
+      t: (key: string) => {
+        if (key in dictionary.ar)
+          return dictionary[language][key as TranslationKey];
+        const oldKey = sourceKeys[key];
+        if (oldKey) return dictionary[language][oldKey];
+        const providerError = key.match(
+          /^(?:Provider|Gemini|Claude|Audio provider) returned (\d+)\.?$/,
+        );
+        if (providerError)
+          return `${uiPhrases["Provider request failed."][language]} (${providerError[1]})`;
+        return uiPhrases[key]?.[language] ?? key;
+      },
     }),
-    [language]
+    [language],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -54,7 +90,7 @@ export function useI18n() {
   return context;
 }
 
-export function T({ k }: { k: TranslationKey }) {
+export function T({ k }: { k: string }) {
   const { t } = useI18n();
   return <>{t(k)}</>;
 }
