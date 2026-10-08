@@ -1,6 +1,8 @@
 /**
- * قائمة المستخدمين وإنشاء حسابات باسم مستخدم وكلمة سر. لا يُسمح للمستخدم العادي بإنشاء الحسابات.
+ * إنشاء حساب مستخدم عادي فقط، دون قائمة حسابات أو تعديل أو حذف. لا يُسمح للمستخدم العادي بإنشاء الحسابات.
  */
+import { getAdminUsername } from "@/lib/admin-env";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { requireApiSession, hashPassword } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
@@ -9,30 +11,6 @@ import { createUserSchema } from "@/lib/validators";
 import { User } from "@/models/User";
 
 export const runtime = "nodejs";
-
-export async function GET() {
-  try {
-    const session = await requireApiSession("admin");
-    if (!session) {
-      return jsonError("Unauthorized.", 401);
-    }
-
-    await dbConnect();
-    const users = await User.find({ role: "user" })
-      .sort({ createdAt: -1 })
-      .select("username createdAt")
-      .lean();
-    return NextResponse.json({
-      users: users.map((user) => ({
-        id: user._id.toString(),
-        username: user.username,
-        createdAt: user.createdAt,
-      })),
-    });
-  } catch (error) {
-    return handleRouteError(error);
-  }
-}
 
 export async function POST(request: Request) {
   try {
@@ -43,6 +21,13 @@ export async function POST(request: Request) {
 
     const body = createUserSchema.parse(await request.json());
     await dbConnect();
+    const limit = await checkRateLimit(`create-user:${session.userId}`, 20, 60);
+    if (!limit.allowed)
+      return jsonError("Please try again later.", 429, {
+        retryAfter: limit.retryAfter,
+      });
+    if (body.username.toLowerCase() === getAdminUsername())
+      return jsonError("This username is reserved for the administrator.", 409);
 
     const existing = await User.findOne({
       username: body.username.toLowerCase(),
@@ -65,6 +50,8 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if ((error as { code?: number }).code === 11000)
+      return jsonError("Username already exists.", 409);
     return handleRouteError(error);
   }
 }

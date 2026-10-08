@@ -1,7 +1,6 @@
 /**
- * قراءة المواضيع والمستويات والشيوع، مع افتراضيات أول تشغيل. التعديل يتحقق من القيم ويحفظ القوائم كلها بمعاملة واحدة.
+ * قراءة المواضيع والمستويات والشيوع المحفوظة، مع افتراضيات أول تشغيل. لا توجد صلاحية تعديل من لوحة الأدمن.
  */
-import mongoose from "mongoose";
 import { FREQUENCIES, LEVELS, TOPICS } from "./constants";
 import { dbConnect } from "./db";
 import { LearningOption } from "@/models/LearningOption";
@@ -41,14 +40,6 @@ export const defaultLearningOptions: LearningOptionView[] = [
   })),
 ];
 
-export function slugifyOption(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\u0370-\u03ff\u0600-\u06ff]+/gi, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 export async function getLearningOptions(includeInactive = false) {
   await dbConnect();
   const saved = await LearningOption.find(
@@ -72,38 +63,4 @@ export async function getLearningOptions(includeInactive = false) {
     levels: options.filter((option) => option.type === "level"),
     frequencies: options.filter((option) => option.type === "frequency"),
   };
-}
-
-export async function replaceLearningOptions(options: LearningOptionView[]) {
-  await dbConnect();
-  const normalized = options.map((option, index) => ({
-    ...option,
-    label: option.label.trim(),
-    value: option.value.trim() || slugifyOption(option.label),
-    description: option.description?.trim() ?? "",
-    order: option.order ?? index,
-  }));
-  const keys = normalized.map((option) => `${option.type}:${option.value}`);
-  if (
-    new Set(keys).size !== keys.length ||
-    normalized.some((option) => !option.value)
-  ) {
-    throw new Error(
-      "Learning options must have unique, non-empty values within each list.",
-    );
-  }
-  for (const type of ["topic", "level", "frequency"]) {
-    if (!normalized.some((option) => option.type === type && option.isActive)) {
-      throw new Error("Each learning list needs at least one active option.");
-    }
-  }
-  const session = await mongoose.startSession();
-  try {
-    await session.withTransaction(async () => {
-      await LearningOption.deleteMany({}, { session });
-      await LearningOption.insertMany(normalized, { session });
-    });
-  } finally {
-    await session.endSession();
-  }
 }

@@ -1,5 +1,22 @@
 /** ترجمات الواجهة ورسائلها: عربية ويونانية فقط. */
 export const uiPhrases: Record<string, { ar: string; el: string }> = {
+  "The administrator can only create user accounts.": {
+    ar: "صلاحية الأدمن هي إنشاء حسابات مستخدمين فقط.",
+    el: "Ο διαχειριστής μπορεί μόνο να δημιουργεί λογαριασμούς χρηστών.",
+  },
+  "Page not found": { ar: "الصفحة غير موجودة", el: "Η σελίδα δεν βρέθηκε" },
+  "This link does not exist. Choose a destination below.": {
+    ar: "هذا الرابط غير موجود. اختر إحدى الصفحات التالية.",
+    el: "Αυτός ο σύνδεσμος δεν υπάρχει. Επίλεξε μία από τις παρακάτω σελίδες.",
+  },
+  "Admin credentials are not configured on the server.": {
+    ar: "بيانات دخول الأدمن غير مضبوطة على السيرفر.",
+    el: "Τα στοιχεία διαχειριστή δεν έχουν ρυθμιστεί στον διακομιστή.",
+  },
+  "This username is reserved for the administrator.": {
+    ar: "اسم المستخدم هذا محجوز للأدمن.",
+    el: "Αυτό το όνομα χρήστη προορίζεται για τον διαχειριστή.",
+  },
   "AI provider settings saved.": {
     ar: "تم حفظ إعدادات المزوّدين.",
     el: "Οι ρυθμίσεις AI αποθηκεύτηκαν.",
