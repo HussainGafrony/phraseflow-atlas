@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { requireApiSession } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
-import { TOPICS } from "@/lib/constants";
+import { getLearningOptions } from "@/lib/options";
 import { handleRouteError, jsonError } from "@/lib/http";
 import { SentenceDelivery } from "@/models/SentenceDelivery";
 import { SavedSentence } from "@/models/SavedSentence";
@@ -28,15 +28,17 @@ export async function GET() {
     const savedByTopic = new Map<string, number>();
     for (const item of saved) {
       const sentence = item.sentenceId as unknown as { topic?: string };
-      if (sentence.topic) {
+      if (sentence?.topic) {
         savedByTopic.set(sentence.topic, (savedByTopic.get(sentence.topic) ?? 0) + 1);
       }
     }
 
     const deliveredByTopic = new Map(delivered.map((item) => [item._id, item.count]));
 
+    const options = await getLearningOptions();
+    const topics = [...new Set([...options.topics.map((item) => item.value), ...deliveredByTopic.keys()])];
     return NextResponse.json({
-      topics: TOPICS.map((topic) => {
+      topics: topics.map((topic) => {
         const total = deliveredByTopic.get(topic) ?? 0;
         const savedCount = savedByTopic.get(topic) ?? 0;
         return {

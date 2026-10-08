@@ -7,6 +7,8 @@ import { handleRouteError, jsonError } from "@/lib/http";
 import { saveSentenceSchema } from "@/lib/validators";
 import { SavedSentence } from "@/models/SavedSentence";
 
+import { SentenceDelivery } from "@/models/SentenceDelivery";
+
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
@@ -18,6 +20,10 @@ export async function POST(request: Request) {
 
     const { sentenceId } = saveSentenceSchema.parse(await request.json());
     await dbConnect();
+
+    if (!(await SentenceDelivery.exists({ userId: session.userId, sentenceId }))) {
+      return jsonError("Sentence not found in your learning history.", 404);
+    }
 
     await SavedSentence.updateOne(
       {

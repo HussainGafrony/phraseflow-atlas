@@ -23,7 +23,7 @@ export const sentenceRequestSchema = z.object({
 });
 
 export const saveSentenceSchema = z.object({
-  sentenceId: z.string().min(1)
+  sentenceId: z.string().regex(/^[a-f0-9]{24}$/i)
 });
 
 export const unlockSchema = z.object({

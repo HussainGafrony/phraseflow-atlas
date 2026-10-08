@@ -55,60 +55,40 @@ export async function getTodaySentencesForUser(userId: string, criteria: Sentenc
   const deliveredIds = delivered.map((item) => item.sentenceId);
   const avoidSentences = await Sentence.find({ _id: { $in: deliveredIds } }).select("text").lean();
 
-  const reservedUsage = await DailyUsage.findOneAndUpdate(
-    {
-      _id: usage._id,
-      totalDelivered: usage.totalDelivered,
-      unlocked: usage.unlocked
-    },
-    { $inc: { totalDelivered: count, batchesDelivered: 1 } },
-    { new: true }
-  );
-
-  if (!reservedUsage) {
-    return {
-      status: "retry" as const,
-      dayKey,
-      remaining: Math.max(0, DAILY_SENTENCE_LIMIT - usage.totalDelivered),
-      sentences: []
-    };
-  }
-
+  // Generate before charging the daily allowance. MongoDB Atlas transactions
+  // commit the allowance and delivery records together, including on retries.
   const sentences = await buildUniqueSentences(criteria, count, avoidSentences.map((item) => item.text));
-
-  if (!sentences.length) {
-    await DailyUsage.updateOne(
-      { _id: usage._id },
-      { $inc: { totalDelivered: -count, batchesDelivered: -1 } }
-    );
-
-    return {
-      status: "empty" as const,
-      dayKey,
-      remaining: DAILY_SENTENCE_LIMIT - (reservedUsage.totalDelivered - count),
-      sentences: []
-    };
-  }
-
-  await SentenceDelivery.insertMany(
-    sentences.map((sentence) => ({
-      userId: new mongoose.Types.ObjectId(userId),
-      sentenceId: sentence._id,
-      dayKey,
-      context: criteria
-    })),
-    { ordered: false }
-  ).catch(() => null);
-
   if (sentences.length < count) {
-    await DailyUsage.updateOne({ _id: usage._id }, { $inc: { totalDelivered: -(count - sentences.length) } });
+    return { status: "empty" as const, dayKey, remaining: DAILY_SENTENCE_LIMIT - usage.totalDelivered, sentences: [] };
   }
 
+  const dbSession = await mongoose.startSession();
+  let committed = false;
+  try {
+    await dbSession.withTransaction(async () => {
+      committed = false;
+      const updated = await DailyUsage.findOneAndUpdate(
+        { _id: usage._id, totalDelivered: usage.totalDelivered, unlocked: usage.unlocked },
+        { $inc: { totalDelivered: sentences.length, batchesDelivered: 1 } },
+        { new: true, session: dbSession }
+      );
+      if (!updated) return;
+      await SentenceDelivery.insertMany(sentences.map((sentence) => ({
+        userId: new mongoose.Types.ObjectId(userId), sentenceId: sentence._id, dayKey, context: criteria
+      })), { session: dbSession });
+      committed = true;
+    });
+  } finally {
+    await dbSession.endSession();
+  }
+  if (!committed) {
+    return { status: "retry" as const, dayKey, remaining: DAILY_SENTENCE_LIMIT - usage.totalDelivered, sentences: [] };
+  }
+  const totalDelivered = usage.totalDelivered + sentences.length;
   return {
-    status: "ok" as const,
-    dayKey,
-    remaining: DAILY_SENTENCE_LIMIT - (reservedUsage.totalDelivered - (count - sentences.length)),
-    sentences
+    status: "ok" as const, dayKey,
+    needsUnlock: totalDelivered >= UNLOCK_AFTER_SENTENCES && !usage.unlocked && totalDelivered < DAILY_SENTENCE_LIMIT,
+    remaining: DAILY_SENTENCE_LIMIT - totalDelivered, sentences
   };
 }
 
@@ -135,10 +115,7 @@ async function buildUniqueSentences(criteria: SentenceCriteria, count: number, a
     seen.add(normalizedText);
     const hash = createStableHash([
       criteria.language,
-      criteria.topic,
-      criteria.level,
-      criteria.frequency,
-      candidate.text
+      normalizedText
     ].join("|"));
 
     const existing = await Sentence.findOne({ hash });

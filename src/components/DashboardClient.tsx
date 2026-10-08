@@ -25,13 +25,15 @@ type LearningOption = {
 
 export function DashboardClient({ username }: { username: string }) {
   const { t } = useI18n();
-  const [language, setLanguage] = useState<string>("german");
+  const [language, setLanguage] = useState<string>("english");
   const [topic, setTopic] = useState<string>(TOPICS[0]);
   const [level, setLevel] = useState<string>(LEVELS[0]);
   const [frequency, setFrequency] = useState<string>(FREQUENCIES[0].value);
   const [sentences, setSentences] = useState<SentenceView[]>([]);
   const [remaining, setRemaining] = useState(DAILY_SENTENCE_LIMIT);
   const [message, setMessage] = useState("");
+  const [initializing, setInitializing] = useState(true);
+  const [selectedProgress, setSelectedProgress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [unlockCode, setUnlockCode] = useState("");
   const [needsUnlock, setNeedsUnlock] = useState(false);
@@ -50,6 +52,9 @@ export function DashboardClient({ username }: { username: string }) {
     }
     const data = await response.json();
     setTopics((current) => data.topics ?? current);
+    setTopic((current) => data.topics?.some((item: LearningOption) => item.value === current) ? current : data.topics?.[0]?.value ?? current);
+    setLevel((current) => data.levels?.some((item: LearningOption) => item.value === current) ? current : data.levels?.[0]?.value ?? current);
+    setFrequency((current) => data.frequencies?.some((item: LearningOption) => item.value === current) ? current : data.frequencies?.[0]?.value ?? current);
     setLevels((current) => data.levels ?? current);
     setFrequencies((current) => data.frequencies ?? current);
   }, []);
@@ -63,82 +68,110 @@ export function DashboardClient({ username }: { username: string }) {
     setProgress(data.topics ?? []);
   }, []);
 
+  const restoreToday = useCallback(async () => {
+    const response = await fetch("/api/sentences/today", { cache: "no-store" });
+    if (!response.ok) throw new Error("Could not restore today's sentences.");
+    const data = await response.json();
+    setSentences(data.sentences ?? []);
+    setRemaining(data.remaining);
+    setNeedsUnlock(Boolean(data.needsUnlock));
+  }, []);
+
   useEffect(() => {
-    loadOptions();
-    refreshProgress();
-  }, [loadOptions, refreshProgress]);
+    Promise.all([loadOptions(), refreshProgress(), restoreToday()])
+      .catch(() => setMessage("Could not load your learning data. Please refresh the page."))
+      .finally(() => setInitializing(false));
+  }, [loadOptions, refreshProgress, restoreToday]);
 
   async function getSentences() {
-    setLoading(true);
-    setMessage("");
+    try {
+      setLoading(true);
+      setMessage("");
 
-    const response = await fetch("/api/sentences/today", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ language, topic, level, frequency })
-    });
+      const response = await fetch("/api/sentences/today", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language, topic, level, frequency })
+      });
 
-    const data = await response.json();
-    setLoading(false);
+      const data = await response.json();
+      if (!response.ok) {
+        setMessage(data.error ?? "Could not load sentences.");
+        return;
+      }
 
-    if (!response.ok) {
-      setMessage(data.error ?? "Could not load sentences.");
-      return;
+      if (data.status === "retry") {
+        await restoreToday();
+        setMessage("Another request updated your daily sentences. Your list has been refreshed.");
+        return;
+      }
+      setRemaining(data.remaining ?? remaining);
+      setNeedsUnlock(Boolean(data.needsUnlock) || data.status === "unlock-required");
+
+      if (data.status === "limit-reached") {
+        setMessage("You reached your 20 sentences for today.");
+        return;
+      }
+
+      if (data.status === "unlock-required") {
+        setMessage("Ask the admin for today's unlock code to continue.");
+        return;
+      }
+
+      setSentences((current) => [...current, ...(data.sentences ?? [])]);
+      setMessage(data.sentences?.length ? "" : "No fresh sentences were generated yet.");
+      await refreshProgress();
+    } catch {
+      setMessage("Connection failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setRemaining(data.remaining ?? remaining);
-    setNeedsUnlock(data.status === "unlock-required");
-
-    if (data.status === "limit-reached") {
-      setMessage("You reached your 20 sentences for today.");
-      return;
-    }
-
-    if (data.status === "unlock-required") {
-      setMessage("Ask the admin for today's unlock code to continue.");
-      return;
-    }
-
-    setSentences((current) => [...current, ...(data.sentences ?? [])]);
-    setMessage(data.sentences?.length ? "" : "No fresh sentences were generated yet.");
-    refreshProgress();
   }
 
   async function unlockToday() {
-    setMessage("");
-    const response = await fetch("/api/unlock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: unlockCode })
-    });
-    const data = await response.json();
+    try {
+      setMessage("");
+      const response = await fetch("/api/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: unlockCode })
+      });
+      const data = await response.json();
 
-    if (!response.ok) {
-      setMessage(data.error ?? "Unlock failed.");
-      return;
+      if (!response.ok) {
+        setMessage(data.error ?? "Unlock failed.");
+        return;
+      }
+
+      setNeedsUnlock(false);
+      setUnlockCode("");
+      setMessage("Unlocked. You can request two more batches today.");
+    } catch {
+      setMessage("Connection failed. Please try again.");
     }
-
-    setNeedsUnlock(false);
-    setUnlockCode("");
-    setMessage("Unlocked. You can request two more batches today.");
   }
 
   async function saveSentence(sentenceId: string) {
-    setSavingId(sentenceId);
-    const response = await fetch("/api/sentences/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sentenceId })
-    });
+    try {
+      setSavingId(sentenceId);
+      const response = await fetch("/api/sentences/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sentenceId })
+      });
 
-    setSavingId("");
-    if (!response.ok) {
-      setMessage("Could not save this sentence.");
-      return;
+      if (!response.ok) {
+        setMessage("Could not save this sentence.");
+        return;
+      }
+
+      setSentences((current) => current.filter((sentence) => sentence.id !== sentenceId));
+      await refreshProgress();
+    } catch {
+      setMessage("Connection failed. Please try again.");
+    } finally {
+      setSavingId("");
     }
-
-    setSentences((current) => current.filter((sentence) => sentence.id !== sentenceId));
-    refreshProgress();
   }
 
   return (
@@ -193,7 +226,7 @@ export function DashboardClient({ username }: { username: string }) {
       </div>
 
       <div className="action-row">
-        <button className="primary-button" type="button" onClick={getSentences} disabled={loading || remaining <= 0 || needsUnlock}>
+        <button className="primary-button" type="button" onClick={getSentences} disabled={initializing || loading || remaining <= 0 || needsUnlock}>
           {loading ? "Generating..." : t("giveMeSentences")}
         </button>
         <span>{remaining} sentences left today</span>
@@ -221,9 +254,11 @@ export function DashboardClient({ username }: { username: string }) {
             type="button"
             key={item.topic}
             title={`${item.percent}% saved from delivered sentences`}
+            aria-expanded={selectedProgress === item.topic}
+            onClick={() => setSelectedProgress((current) => current === item.topic ? null : item.topic)}
           >
             <span>{item.topic}</span>
-            <strong>{item.percent}%</strong>
+            <strong>{selectedProgress === item.topic ? `${item.percent}%` : "🌱"}</strong>
             <small>
               {item.saved}/{item.delivered || 0}
             </small>
