@@ -15,12 +15,12 @@ export async function GET(
   { params }: { params: Promise<{ key: string }> },
 ) {
   try {
-    const session = await requireApiSession();
+    const session = await requireApiSession("user");
     if (!session) return jsonError("Unauthorized.", 401);
     const { key } = await params;
     if (!/^[a-f0-9]{64}$/.test(key)) return jsonError("Not found.", 404);
     await dbConnect();
-    if (session.role !== "admin") {
+    {
       const sentences = await Sentence.find({ audioUrl: `/api/audio/${key}` })
         .select("_id")
         .lean();

@@ -1,79 +1,45 @@
 # PhraseFlow Atlas
 
-Daily sentence learning app for German, English, and Greek with Arabic translations.
-
-## What is included
-
-- Public landing page with weekly editable sentences.
-- User login with username and password.
-- Daily sentence flow: 5 + 5 sentences, admin unlock code, then 5 + 5 more.
-- 20 sentences per user per day.
-- Saved sentences page separated by day.
-- Topic progress indicators.
-- Admin panel for users, unlock code, AI provider settings, and landing sentences.
-- First-admin setup page at `/admin/setup` protected by `ADMIN_SETUP_TOKEN`.
-- Editable topics, levels, and frequency options from the admin panel.
-- Arabic and Greek UI, with Arabic as the default and right-to-left support.
-- MongoDB models ready for MongoDB Atlas.
-- AI provider settings for OpenAI, Gemini, Claude, DeepSeek, and Grok.
+Language learning with German, English and Greek sentences and Arabic translations. The interface supports Arabic (default) and Greek.
 
 ## Setup
 
 1. Copy `.env.example` to `.env.local`.
-2. Fill:
-   - `MONGODB_URI`
-   - `SESSION_SECRET`
-   - `APP_ENCRYPTION_KEY`
-   - `ADMIN_SETUP_TOKEN`
-3. Install dependencies:
+2. Set `MONGODB_URI`, `SESSION_SECRET` (at least 32 characters), `APP_ENCRYPTION_KEY`, `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
+3. Run `npm install`, then `npm run dev`.
 
-```bash
-npm install
-```
+The administrator is read **only from server environment variables**, never created in MongoDB. Username: 3–40 characters, case insensitive; password: 8–120 characters, case sensitive. Changing either credential invalidates existing administrator sessions. Do not prefix these variables with `NEXT_PUBLIC_` or commit real credentials. On Vercel set them in the project environment and redeploy for changes to take effect.
 
-4. Create the first admin:
+There is no setup page or seed-admin command. Old database admin accounts cannot sign in. MongoDB is still required for rate limits and creating user accounts.
 
-```bash
-ADMIN_USERNAME=admin ADMIN_PASSWORD=your-password npm run seed:admin
-```
+## Routes and permissions
 
-Or use `/admin/setup` after configuring `ADMIN_SETUP_TOKEN`. The setup page closes after the first admin exists.
+| Route | Access |
+| --- | --- |
+| `/` | Public weekly sentences |
+| `/login` | User login |
+| `/user` | Alias: user dashboard, or user login when signed out |
+| `/dashboard`, `/saved` | User session required |
+| `/admin/login` | Environment administrator login |
+| `/admin` | Environment administrator; create ordinary accounts only |
+| `/api/admin/users` | Administrator POST only; GET/PUT/DELETE unsupported |
+| Unknown routes, including `/admin/setup` | 404 |
 
-5. Start development:
+Wrong-role page requests redirect to that account's home. APIs reject wrong roles. Login redirects use fixed internal paths. Editing a URL does not grant access. Logout clears the session and returns to the public page.
 
-```bash
-npm run dev
-```
+## Features and configuration limits
 
-## Routes
+- Daily five-sentence batches: 5 + 5, unlock, 5 + 5, capped at 20 using a MongoDB transaction.
+- Saved sentences grouped by day, restoration of today's unsaved sentences, duplicate checks and per-topic progress.
+- Shared MongoDB rate limits for login, generation, unlock, audio and account creation.
+- Existing database AI provider profiles and encrypted audio settings continue to work.
+- Audio generated once and stored in private Vercel Blob, with authenticated playback; device voice fallback when unavailable.
+- Weekly public sentence rotation and a curated fallback; `CRON_SECRET` protects the scheduled route.
 
-- `/` public page
-- `/login` user login
-- `/dashboard` user learning dashboard
-- `/saved` saved sentences
-- `/admin/login` admin login
-- `/admin/setup` first-admin setup
-- `/admin` admin panel
+The admin panel intentionally **has no provider, audio, unlock-code, learning-options or public-sentence settings**, no user list and no edit/delete/reset-password actions. Existing database configuration remains in use, but new installations need that configuration provisioned separately. AI/API keys are **not** automatically read from new environment variable names. No enabled provider means no new generated sentences; no active stored unlock code means the extra ten daily sentences cannot be unlocked. See [FEATURE_STATUS.md](FEATURE_STATUS.md) for the full audit.
 
-## AI providers
+`MONGODB_DB_NAME` overrides the database in `MONGODB_URI`; fallback is `phraseflow-atlas`. `APP_TIME_ZONE` defines the daily reset. `BLOB_READ_WRITE_TOKEN` may supply the private Blob token; audio provider settings still come from MongoDB. Preserve `APP_ENCRYPTION_KEY` to decrypt existing settings.
 
-AI provider secrets are entered from `/admin` in the AI providers tab. The API key is saved encrypted with `APP_ENCRYPTION_KEY`. If no provider is available, the app reports an error without charging the daily allowance. It never substitutes fabricated teaching sentences or translations.
+## Verification
 
-## Audio
-
-The admin Audio and storage tab configures an OpenAI-compatible speech service and a **private** Vercel Blob store. API keys and the Blob token are encrypted in MongoDB. A dedicated audio model and voice are separate from the text model. Use Save and test audio to generate, store, and play a real sample.
-
-Audio files are cached by text/language/model/voice. MongoDB stores the asset record; the application serves a stable authenticated audio URL. Missing audio can be generated on first playback. Without configured credentials the UI identifies its device-voice fallback.
-
-## Configuration
-
-- Database name: `MONGODB_DB_NAME` overrides the URI database; otherwise the URI path is used, falling back to `phraseflow-atlas`.
-- `ADMIN_SETUP_TOKEN`: required for production first-admin setup; the setup endpoint closes after an admin exists.
-- `CRON_SECRET`: protects the daily scheduled check that rotates public sentences weekly. A curated weekly fallback also works on page access without AI keys.
-- Optional `BLOB_READ_WRITE_TOKEN`: private store token; can instead be entered in the admin audio settings.
-
-## Verification and code guide
-
-Run `npm test`, `npm run lint`, and `npm run build`. Tests mock MongoDB, AI providers, and Blob; live credentials and MongoDB Atlas transaction verification are still required before production acceptance.
-
-See [CODE_GUIDE.md](CODE_GUIDE.md) for the Arabic feature guide, data flow, configuration, and rate limits. Feature modules contain Arabic comments.
+`npm test` and `npm run build` check behavior, types and build output. Automated tests use mocked MongoDB/AI/Blob boundaries; they do not establish that production credentials or Atlas transactions work. See [CODE_GUIDE.md](CODE_GUIDE.md) for feature locations and comments.

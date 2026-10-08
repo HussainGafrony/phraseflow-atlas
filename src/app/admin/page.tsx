@@ -1,5 +1,5 @@
 /**
- * صفحة محمية بدور الأدمن تضم لوحة إدارة الحسابات والمزوّدين والمحتوى.
+ * صفحة محمية لأدمن البيئة؛ تعرض إنشاء حسابات مستخدمين فقط.
  */
 import { T } from "@/components/I18nProvider";
 import { AdminPanel } from "@/components/AdminPanel";

@@ -8,7 +8,6 @@
     "build": "node --require ./scripts/node-memory-patch.cjs ./node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "next lint",
-    "seed:admin": "node scripts/seed-admin.mjs",
     "seed:landing": "node scripts/seed-landing.mjs",
     "test": "node --test scripts/test-*.cjs"
   },

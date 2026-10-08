@@ -1,11 +1,16 @@
 /**
- * مدخل الأدمن المستقل، مع رابط تهيئة الحساب الأول عند الحاجة.
+ * مدخل الأدمن المستقل؛ بياناته من متغيرات بيئة السيرفر ولا توجد صفحة لإنشائه.
  */
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LoginForm } from "@/components/LoginForm";
 import { T } from "@/components/I18nProvider";
 
-export default function AdminLoginPage() {
+export default async function AdminLoginPage() {
+  // الجلسة الحالية تحدد الوجهة؛ لا نثق بمعامل redirectTo من الرابط.
+  const session = await getSession();
+  if (session) redirect(session.role === "admin" ? "/admin" : "/dashboard");
   return (
     <main className="auth-page admin-auth">
       <section className="auth-card">
@@ -20,9 +25,6 @@ export default function AdminLoginPage() {
           <T k="This direct link opens the admin area only." />{" "}
         </p>
         <LoginForm expectedRole="admin" buttonKey="enterAdmin" />
-        <Link className="back-link" href="/admin/setup">
-          <T k="setupAdmin" />
-        </Link>
       </section>
     </main>
   );

@@ -1,11 +1,16 @@
 /**
  * مدخل المستخدم العادي مع رسائل وتعليمات مترجمة؛ التحقق الفعلي يتم في API الدخول.
  */
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LoginForm } from "@/components/LoginForm";
 import { T } from "@/components/I18nProvider";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // الجلسة الحالية تحدد الوجهة؛ لا نثق بمعامل redirectTo من الرابط.
+  const session = await getSession();
+  if (session) redirect(session.role === "admin" ? "/admin" : "/dashboard");
   return (
     <main className="auth-page">
       <section className="auth-card">

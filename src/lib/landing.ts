@@ -1,5 +1,5 @@
 /**
- * تبديل جمل الصفحة العامة كل أسبوع: قفل مؤقت يمنع التكرار، ومعاملة تحفظ المجموعة كاملة. تعديل الأدمن يتقدم على التوليد التلقائي.
+ * تبديل جمل الصفحة العامة كل أسبوع: قفل مؤقت يمنع التكرار، ومعاملة تحفظ المجموعة كاملة. المجموعات المثبتة سابقاً تبقى محفوظة للأسبوع نفسه.
  */
 import mongoose from "mongoose";
 import { dbConnect } from "./db";
@@ -105,7 +105,7 @@ export async function rotateWeeklyLanding(
         { $set: { sourceProvider }, $unset: { leaseUntil: 1 } },
         { session },
       );
-      if (!updated.modifiedCount) return; // An admin edit takes precedence.
+      if (!updated.modifiedCount) return; // Another completed rotation or a previously pinned set takes precedence.
       await LandingSentence.updateMany(
         { activeFromWeek: weekKey },
         { $set: { isActive: false } },

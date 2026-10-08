@@ -1,6 +1,7 @@
 /**
  * جلسات الدخول: تشفير كلمات المرور بـ bcrypt، توقيع JWT داخل cookie آمن، وفصل صلاحيات الأدمن عن المستخدم في الصفحات والـ API.
  */
+import { adminCredentialVersion, isCurrentAdminSession } from "./admin-env";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
@@ -38,6 +39,9 @@ export async function createSessionToken(session: AppSession) {
   return new SignJWT({
     username: session.username,
     role: session.role,
+    ...(session.role === "admin"
+      ? { adminVersion: adminCredentialVersion() }
+      : {}),
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(session.userId)
@@ -72,10 +76,19 @@ export async function getSession(): Promise<AppSession | null> {
   }
 
   try {
-    const { payload } = await jwtVerify(token, getSessionSecret());
-    if (!payload.sub || !payload.username || !payload.role) {
+    const { payload } = await jwtVerify(token, getSessionSecret(), {
+      algorithms: ["HS256"],
+    });
+    if (
+      !payload.sub ||
+      typeof payload.username !== "string" ||
+      !["user", "admin"].includes(String(payload.role))
+    )
       return null;
-    }
+    if (payload.role === "admin" && !isCurrentAdminSession(payload))
+      return null;
+    if (payload.role === "user" && !/^[a-f0-9]{24}$/i.test(payload.sub))
+      return null;
 
     return {
       userId: payload.sub,
@@ -111,5 +124,8 @@ export async function requirePageSession(role?: SessionRole) {
 
 export async function findUserForLogin(username: string) {
   await dbConnect();
-  return User.findOne({ username: username.toLowerCase().trim() });
+  return User.findOne({
+    username: username.toLowerCase().trim(),
+    role: "user",
+  });
 }
