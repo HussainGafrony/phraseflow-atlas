@@ -1,5 +1,5 @@
 /**
- * تشفير مفاتيح الخدمات بـ AES-256-GCM قبل التخزين. APP_ENCRYPTION_KEY يبقى في السيرفر؛ تغيير قيمته يحتاج إعادة حفظ مفاتيح الخدمات.
+ * Encrypt service secrets with AES-256-GCM before storage. Keep APP_ENCRYPTION_KEY on the server; changing it requires re-encrypting saved secrets.
  */
 import crypto from "crypto";
 

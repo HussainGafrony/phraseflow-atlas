@@ -1,5 +1,5 @@
 /**
- * جلب محفوظات المستخدم المسجل فقط مع بيانات الجمل لعرضها مجمعة بالأيام.
+ * Return only the signed-in user's saved sentences with sentence details for grouping by day.
  */
 import { NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";

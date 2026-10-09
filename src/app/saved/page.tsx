@@ -1,5 +1,5 @@
 /**
- * صفحة مراجعة محفوظات المستخدم؛ التحقق من الجلسة يسبق عرض المحتوى.
+ * Protected saved-sentence review page. Verify the session before rendering content.
  */
 import { T } from "@/components/I18nProvider";
 import Link from "next/link";

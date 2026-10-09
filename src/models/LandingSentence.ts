@@ -1,5 +1,5 @@
 /**
- * جمل الصفحة العامة الثابتة وحالة ظهورها.
+ * Fixed public landing sentences and their visibility status.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

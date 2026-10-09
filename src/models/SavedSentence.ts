@@ -1,5 +1,5 @@
 /**
- * محفوظات المستخدم ويوم الحفظ؛ علاقة فريدة بين المستخدم والجملة.
+ * Saved sentences and their save dates, with a unique user-sentence relationship.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

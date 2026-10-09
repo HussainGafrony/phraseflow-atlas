@@ -1,5 +1,5 @@
 /**
- * نص الجملة وترجمتها ومعاييرها ؛ بصمة فريدة لمنع تكرار النص المخزن.
+ * Sentence text, translation, and learning criteria. A unique hash prevents duplicate stored text.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

@@ -1,5 +1,5 @@
 /**
- * صفحة التعلم المحمية للمستخدم، مع روابط محفوظاته وتسجيل الخروج.
+ * Protected learning page with links to saved sentences and logout.
  */
 import { T } from "@/components/I18nProvider";
 import Link from "next/link";

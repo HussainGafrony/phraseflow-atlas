@@ -1,4 +1,4 @@
-// كلمات مرور وتوقيعات حقيقية مع محاكاة قاعدة البيانات والـ cookies.
+// Use real password hashing and signatures with mocked database and cookie boundaries.
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");

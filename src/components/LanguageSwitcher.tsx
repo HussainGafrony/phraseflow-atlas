@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * قائمة لغة الواجهة فقط، مستقلة عن اللغة التي يتعلمها المستخدم. القيم المسموحة تأتي من i18n.ts.
+ * Select the interface language independently of the learning language. Allowed values come from i18n.ts.
  */
 
 import { UI_LANGUAGES, type UiLanguage } from "@/lib/i18n";

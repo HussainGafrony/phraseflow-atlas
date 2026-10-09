@@ -1,5 +1,5 @@
 /**
- * حساب اليوم حسب APP_TIME_ZONE كي تشترك الحصة اليومية والفواصل والتبديل الأسبوعي في نفس التوقيت. تاريخ العرض يُترجم حسب لغة الواجهة.
+ * Use APP_TIME_ZONE for consistent daily allowances and save-date boundaries. Format dates in the interface language.
  */
 const appTimeZone = process.env.APP_TIME_ZONE ?? "Europe/Athens";
 

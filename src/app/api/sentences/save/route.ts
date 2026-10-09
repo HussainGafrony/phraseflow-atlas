@@ -1,5 +1,5 @@
 /**
- * حفظ جملة سبق تسليمها لهذا المستخدم فقط؛ upsert يمنع تكرار المحفوظة ويحتفظ بتاريخ الحفظ الأول.
+ * Save only sentences delivered to this user. Upsert prevents duplicates and preserves the original save date.
  */
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";

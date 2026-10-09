@@ -1,5 +1,5 @@
 /**
- * تحديد المحاولات عبر عداد مشترك في MongoDB؛ مفاتيح مستقلة للدخول والجمل والرموز والاختبارات. انتهاء النافذة منفصل عن حذف TTL المتأخر.
+ * Shared MongoDB request counters with separate keys for each operation. Window expiration is independent of delayed TTL cleanup.
  */
 import { RateLimit } from "@/models/RateLimit";
 
@@ -11,8 +11,8 @@ export async function checkRateLimit(
   const now = new Date();
   const expiresAt = new Date(now.getTime() + windowSeconds * 1000);
 
-  // العداد مشترك في MongoDB بين جميع نسخ Vercel، وليس في ذاكرة سيرفر واحد.
-  // تعيد النافذة المنتهية العدّ إلى 1 دون انتظار حذف مستندها بفهرس TTL.
+  // Share the counter in MongoDB across Vercel instances instead of keeping it in server memory.
+  // Reset an expired window to one without waiting for the TTL index to delete its document.
   const expired = { $lte: [{ $ifNull: ["$expiresAt", new Date(0)] }, now] };
   const pipeline = [
     {
@@ -32,11 +32,11 @@ export async function checkRateLimit(
       new: true,
     });
   } catch (error) {
-    // عند أول طلبين متزامنين قد ينشئ الآخر المفتاح أولاً؛ نزيد العداد الموجود.
+    // Concurrent first requests may insert the same key; increment the record created by the other request.
     if ((error as { code?: number }).code !== 11000) throw error;
     record = await RateLimit.findOneAndUpdate({ key }, pipeline, { new: true });
   }
-  // عند فشل التخزين لا نسمح بالطلب دون تطبيق حدّه.
+  // Fail closed if storage cannot return a counter; never bypass the rate limit.
   if (!record)
     throw new Error("Rate limit could not be checked. Please try again.");
 

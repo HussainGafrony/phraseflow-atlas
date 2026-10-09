@@ -1,4 +1,4 @@
-/** جمل عامة ثابتة: نقرأ آخر الجمل اليونانية النشطة، ونكملها بالمحتوى الثابت دون كتابة أو تدوير أسبوعي. */
+/** Read the latest active Greek landing sentences and complete the set with fixed content, without writes or weekly rotation. */
 import { dbConnect } from "./db";
 import { defaultLandingSentences } from "./constants";
 import { LandingSentence } from "@/models/LandingSentence";

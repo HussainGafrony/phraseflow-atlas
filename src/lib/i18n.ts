@@ -1,4 +1,4 @@
-/** لغتا الواجهة فقط. مفاتيح العبارات الإنجليزية داخلية ولا تضيف لغة للواجهة. */
+/** Only two interface languages are supported. Internal English phrase keys do not add another interface language. */
 export const UI_LANGUAGES = [
   { value: "ar", label: "العربية" },
   { value: "el", label: "Ελληνικά" },

@@ -1,5 +1,5 @@
 /**
- * إنهاء الجلسة عبر حذف cookie من السيرفر؛ لا نكتفي بمسح حالة الواجهة.
+ * End the session by deleting its server cookie, rather than only clearing client state.
  */
 import { NextResponse } from "next/server";
 import { clearSessionCookie } from "@/lib/auth";

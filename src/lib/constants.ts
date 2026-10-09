@@ -1,5 +1,5 @@
 /**
- * إعدادات التعلم المشتركة والقيم الافتراضية. لغات التعلم مستقلة عن لغتي الواجهة المحددتين في i18n.ts.
+ * Shared learning configuration and defaults. The learning language is independent of the two interface languages in i18n.ts.
  */
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "PhraseFlow Atlas";
 
@@ -50,7 +50,7 @@ export type LearningLevel = (typeof LEVELS)[number];
 export type FrequencyLevel = (typeof FREQUENCIES)[number]["value"];
 export type ProviderKey = (typeof PROVIDER_KEYS)[number];
 
-// محتوى ثابت للصفحة العامة؛ لا تدوير أسبوعي ولا توليد تلقائي.
+// Fixed public landing content with no weekly rotation or automatic generation.
 export const defaultLandingSentences = [
   {
     language: "greek",

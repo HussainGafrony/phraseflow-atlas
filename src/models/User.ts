@@ -1,5 +1,5 @@
 /**
- * حسابات المستخدمين والأدمن في MongoDB. الأسماء تُحفظ كما أُدخلت وكلمة السر كـ hash.
+ * MongoDB user and administrator accounts. Preserve usernames exactly as entered and store password hashes.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

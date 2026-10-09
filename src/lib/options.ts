@@ -1,5 +1,5 @@
 /**
- * قراءة المواضيع والمستويات والشيوع المحفوظة، مع افتراضيات أول تشغيل. لا توجد صلاحية تعديل من لوحة الأدمن.
+ * Read stored topics, levels, and frequency options, with defaults for first use. The admin panel does not expose editing.
  */
 import { FREQUENCIES, LEVELS, TOPICS } from "./constants";
 import { dbConnect } from "./db";

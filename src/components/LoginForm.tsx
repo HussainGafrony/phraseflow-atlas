@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * نموذج الدخول للمستخدم والأدمن؛ يرسل الدور المتوقع لمنع الدخول من البوابة الخطأ ويعيد تفعيل الزر عند فشل الشبكة.
+ * Shared login form that sends the expected role to enforce portal separation and restores the button after network failures.
  */
 
 import { useState } from "react";

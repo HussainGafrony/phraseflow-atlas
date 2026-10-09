@@ -1,4 +1,4 @@
-/** حساب أدمن البيئة يبقى متاحاً إضافة إلى حسابات أدمن MongoDB؛ الأسماء تُقارن حرفياً دون قيود طول. */
+/** Environment administrator credentials remain available alongside MongoDB admin accounts. Compare usernames exactly without length restrictions. */
 import { createHash, timingSafeEqual } from "node:crypto";
 export const ENV_ADMIN_ID = "environment-admin";
 function safeEqual(left: string, right: string) {

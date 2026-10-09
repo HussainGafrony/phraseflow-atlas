@@ -1,5 +1,5 @@
 /**
- * إنشاء حساب مستخدم أو أدمن، دون قائمة حسابات أو تعديل أو حذف. لا يُسمح للمستخدم العادي بإنشاء الحسابات.
+ * Create user or administrator accounts without listing, editing, or deleting accounts. Ordinary users cannot create accounts.
  */
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";

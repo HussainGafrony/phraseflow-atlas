@@ -1,5 +1,5 @@
 /**
- * جلسات الدخول: تشفير كلمات المرور بـ bcrypt، توقيع JWT داخل cookie آمن، وفصل صلاحيات الأدمن عن المستخدم في الصفحات والـ API.
+ * Hash passwords with bcrypt, sign JWTs in secure cookies, and enforce user/admin roles for pages and APIs.
  */
 import { ENV_ADMIN_ID } from "./admin-env";
 import bcrypt from "bcryptjs";
@@ -56,7 +56,7 @@ export async function setSessionCookie(session: AppSession) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    // Session cookie بلا maxAge أو expires: لا نطلب تذكّر الدخول بين جلسات المتصفح.
+    // Session cookie without maxAge or expires: do not request persistent login between browser sessions.
   });
 }
 
@@ -82,7 +82,7 @@ export async function getSession(): Promise<AppSession | null> {
       !["user", "admin"].includes(String(payload.role))
     )
       return null;
-    // توقيع JWT والدور مطلوبان حتى للجلسة غير الدائمة. الأدمن إما من البيئة أو MongoDB.
+    // Verify the JWT signature and role even for nonpersistent sessions. Administrators may come from the environment or MongoDB.
     if (
       !(payload.role === "admin" && payload.sub === ENV_ADMIN_ID) &&
       !/^[a-f0-9]{24}$/i.test(payload.sub)

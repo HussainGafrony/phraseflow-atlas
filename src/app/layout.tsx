@@ -1,5 +1,5 @@
 /**
- * الغلاف المشترك لكل الصفحات: مزود الترجمة ومبدل اللغة. أول عرض يكون بالعربية وباتجاه RTL.
+ * Shared page layout with the translation provider and language switcher. The initial render uses Arabic and RTL.
  */
 import type { Metadata } from "next";
 import "./globals.css";

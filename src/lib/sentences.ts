@@ -1,5 +1,5 @@
 /**
- * منطق جمل اليوم: فحص الحصة، استبعاد المكرر، التوليد، ثم تسليم الدفعة والخصم بمعاملة ذرية. لا تعتمد الحماية على حالة زر الواجهة.
+ * Check the daily allowance, filter duplicates, generate sentences, then commit delivery and allowance usage atomically. Protection does not depend on the UI button state.
  */
 import mongoose from "mongoose";
 import {
@@ -27,7 +27,7 @@ export async function getTodaySentencesForUser(
   criteria: SentenceCriteria,
 ) {
   const dayKey = getDayKey();
-  // الفهرس الفريد (المستخدم + اليوم) يمنع إنشاء عدّادين عند أول طلب متزامن.
+  // The unique user-and-day index prevents duplicate counters during concurrent first requests.
   const usage = await DailyUsage.findOneAndUpdate(
     { userId, dayKey },
     { $setOnInsert: { userId, dayKey } },
@@ -61,8 +61,8 @@ export async function getTodaySentencesForUser(
     .select("text")
     .lean();
 
-  // نولّد الجمل قبل الخصم: فشل المزوّد لا يستهلك الحصة اليومية.
-  // تُحفظ زيادة العداد وسجل التسليم معاً في معاملة MongoDB واحدة.
+  // Generate before charging the allowance so provider failures do not consume it.
+  // Commit the counter increment and delivery history together in one MongoDB transaction.
   const sentences = await buildUniqueSentences(
     criteria,
     count,
@@ -86,7 +86,7 @@ export async function getTodaySentencesForUser(
         {
           _id: usage._id,
           totalDelivered: usage.totalDelivered,
-          // شرط ذرّي داخل قاعدة البيانات: لا يتجاوز الطلب الحد اليومي 20.
+          // Atomic database condition: this request must not exceed the daily limit of 20.
           $expr: {
             $lte: [
               { $add: ["$totalDelivered", sentences.length] },
@@ -97,7 +97,7 @@ export async function getTodaySentencesForUser(
         { $inc: { totalDelivered: sentences.length, batchesDelivered: 1 } },
         { new: true, session: dbSession },
       );
-      // إذا سبقنا طلب آخر، نعيد حالة retry ليجلب العميل العداد الصحيح.
+      // If another request updated the counter first, return retry so the client reloads the current state.
       if (!updated) return;
       await SentenceDelivery.insertMany(
         sentences.map((sentence) => ({
@@ -171,7 +171,7 @@ async function buildUniqueSentences(
       sourceProvider: candidate.sourceProvider,
       hash,
     }).catch((error) => {
-      // قد يضيف طلب آخر النص نفسه بعد فحص الوجود؛ الفهرس الفريد هو الحكم النهائي.
+      // Another request may insert the same text after the existence check; the unique index is the final safeguard.
       if (error?.code === 11000) return null;
       throw error;
     });

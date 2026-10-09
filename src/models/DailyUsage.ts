@@ -1,5 +1,5 @@
 /**
- * حصة كل مستخدم في اليوم. الفهرس الفريد userId + dayKey يمنع تعدد العدادات.
+ * Daily allowance for each user. The unique userId + dayKey index prevents duplicate counters.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

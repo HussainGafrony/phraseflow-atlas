@@ -1,5 +1,5 @@
 /**
- * POST يطلب دفعة ضمن حد المحاولات والحصة. GET يستعيد عداد اليوم وجمله غير المحفوظة بعد تحديث الصفحة دون توليد جديد.
+ * POST requests a batch within the rate and allowance limits. GET restores today's counter and unsaved sentences without generating more.
  */
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";

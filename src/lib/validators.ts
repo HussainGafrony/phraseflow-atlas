@@ -1,5 +1,5 @@
 /**
- * قواعد التحقق من مدخلات المستخدم والأدمن باستخدام Zod؛ تُطبّق على السيرفر قبل استخدام البيانات أو حفظها.
+ * Validate user and administrator input with Zod on the server before using or storing it.
  */
 import { z } from "zod";
 import { LEARNING_LANGUAGE } from "./constants";

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * حالة لغة الواجهة المشتركة بين الصفحات. العربية افتراضية واليونانية اختيار ثانٍ؛ يُحفظ الاختيار محلياً ويُضبط اتجاه الصفحة RTL/LTR.
+ * Shared interface language state. Arabic is the default, Greek is optional, and the local preference controls RTL/LTR direction.
  */
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";

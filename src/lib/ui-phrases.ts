@@ -1,4 +1,4 @@
-/** ترجمات واجهة العربية واليونانية ورسائلها. */
+/** Arabic and Greek translations for interface text and messages. */
 export const uiPhrases: Record<string, { ar: string; el: string }> = {
   "Learn Greek": {
     ar: "تعلّم اليونانية",

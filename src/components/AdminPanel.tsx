@@ -1,5 +1,5 @@
 "use client";
-/** وظيفة الأدمن: إنشاء حساب مستخدم أو أدمن إضافي. لا قوائم حسابات أو إعدادات أو صلاحيات إضافية. */
+/** Administrators can create user or additional administrator accounts. No account list or settings are exposed. */
 import { useState } from "react";
 import { useI18n } from "./I18nProvider";
 export function AdminPanel() {

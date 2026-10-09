@@ -1,5 +1,5 @@
 /**
- * تاريخ الجمل المسلّمة لكل مستخدم؛ فهرس فريد للمستخدم والجملة يمنع تكرار التسليم.
+ * Sentence delivery history for each user. A unique user-sentence index prevents duplicate deliveries.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

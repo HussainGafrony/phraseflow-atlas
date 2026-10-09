@@ -1,5 +1,5 @@
 /**
- * حساب نسبة الجمل المحفوظة من الجمل المسلّمة لكل موضوع، بما فيها المواضيع التي أضافها الأدمن.
+ * Calculate saved sentences as a percentage of delivered sentences per topic, including previously configured topics.
  */
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";

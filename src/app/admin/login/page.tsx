@@ -1,5 +1,5 @@
 /**
- * مدخل الأدمن المستقل؛ يدعم حساب البيئة وحسابات الأدمن في MongoDB.
+ * Separate administrator login supporting both environment credentials and MongoDB admin accounts.
  */
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -8,7 +8,7 @@ import { LoginForm } from "@/components/LoginForm";
 import { T } from "@/components/I18nProvider";
 
 export default async function AdminLoginPage() {
-  // الجلسة الحالية تحدد الوجهة؛ لا نثق بمعامل redirectTo من الرابط.
+  // Use the current session to choose the destination; never trust a redirectTo query parameter.
   const session = await getSession();
   if (session) redirect(session.role === "admin" ? "/admin" : "/dashboard");
   return (

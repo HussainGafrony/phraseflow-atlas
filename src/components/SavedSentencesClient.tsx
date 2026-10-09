@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * تحميل محفوظات المستخدم وتجميعها حسب يوم الحفظ؛ عناوين الأيام تُعرض بلغة الواجهة الحالية.
+ * Load saved sentences and group them by the day they were saved. Format day headings in the current interface language.
  */
 
 import { useEffect, useMemo, useState } from "react";

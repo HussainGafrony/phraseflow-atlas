@@ -1,5 +1,5 @@
 /**
- * اتصال MongoDB يُعاد استخدامه بين الطلبات لتجنب فتح اتصال جديد كل مرة. فشل الاتصال يمسح الوعد المخزن ليسمح بالمحاولة التالية.
+ * Reuse the MongoDB connection across requests. Clear a failed cached connection promise so later requests can retry.
  */
 import mongoose from "mongoose";
 

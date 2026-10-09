@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * حذف جلسة المستخدم من السيرفر ثم العودة للصفحة العامة وتحديث بيانات التنقل.
+ * Delete the server session cookie, return to the public page, and refresh navigation state.
  */
 
 import { useI18n } from "./I18nProvider";

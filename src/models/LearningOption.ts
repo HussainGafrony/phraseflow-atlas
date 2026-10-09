@@ -1,5 +1,5 @@
 /**
- * خيارات الموضوع والمستوى والشيوع: اسم العرض والقيمة والترتيب وحالة التفعيل.
+ * Topic, level, and frequency options, including display labels, values, ordering, and enabled status.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

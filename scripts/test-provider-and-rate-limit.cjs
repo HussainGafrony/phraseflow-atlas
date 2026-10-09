@@ -27,7 +27,7 @@ function load(path, mocks, globals = {}) {
   });
   return exports;
 }
-// تقييم التعبيرات التي يرسلها التطبيق إلى MongoDB، مع محاكاة الساعة وحدود التخزين فقط.
+// Evaluate the MongoDB expressions emitted by the application while mocking only the clock and storage boundaries.
 function evaluate(expression, document) {
   if (expression instanceof Date) return expression;
   if (typeof expression === "string" && expression.startsWith("$"))

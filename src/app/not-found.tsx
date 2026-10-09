@@ -1,4 +1,4 @@
-/** أي مسار غير موجود لا يفتح صلاحيات إضافية؛ نعرض 404 وروابط ثابتة معلومة. */
+/** Unknown routes render a 404 with fixed navigation links and do not grant additional access. */
 import Link from "next/link";
 import { T } from "@/components/I18nProvider";
 export default function NotFound() {

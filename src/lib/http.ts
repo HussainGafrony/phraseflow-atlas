@@ -1,5 +1,5 @@
 /**
- * بناء ردود API والأخطاء وتنسيق أخطاء التحقق؛ يرفق Retry-After عند منع الطلب مؤقتاً بسبب تجاوز حد المحاولات.
+ * Build API responses and validation errors. Include Retry-After when a rate-limit response provides a retry duration.
  */
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";

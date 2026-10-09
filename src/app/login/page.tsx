@@ -1,5 +1,5 @@
 /**
- * مدخل المستخدم العادي مع رسائل وتعليمات مترجمة؛ التحقق الفعلي يتم في API الدخول.
+ * User login page with translated instructions and messages. Authentication is handled by the login API.
  */
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -8,7 +8,7 @@ import { LoginForm } from "@/components/LoginForm";
 import { T } from "@/components/I18nProvider";
 
 export default async function LoginPage() {
-  // الجلسة الحالية تحدد الوجهة؛ لا نثق بمعامل redirectTo من الرابط.
+  // Use the current session to choose the destination; never trust a redirectTo query parameter.
   const session = await getSession();
   if (session) redirect(session.role === "admin" ? "/admin" : "/dashboard");
   return (

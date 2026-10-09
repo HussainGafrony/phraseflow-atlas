@@ -1,5 +1,5 @@
 /**
- * قراءة الخيارات النشطة للمواضيع والمستويات والشيوع التي تظهر بقوائم المستخدم.
+ * Read the active topics, levels, and frequency options shown in the learning selectors.
  */
 import { requireApiSession } from "@/lib/auth";
 import { NextResponse } from "next/server";

@@ -1,5 +1,5 @@
 /**
- * الصفحة العامة قبل الدخول: أربع جمل يونانية ثابتة مترجمة للعربية وروابط الدخول؛ دون تغيير أسبوعي.
+ * Public landing page with four fixed Greek sentences, Arabic translations, and login links. No weekly rotation.
  */
 import { T } from "@/components/I18nProvider";
 import Link from "next/link";

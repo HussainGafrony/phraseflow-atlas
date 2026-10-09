@@ -1,5 +1,5 @@
 /**
- * استدعاء مزوّدي النص بالترتيب، وتحليل JSON والتحقق من الجمل. اختبار المزوّد يتصل به وحده دون التحول لمزوّد بديل.
+ * Try text providers in priority order, parse JSON, and validate sentences. Provider diagnostics test only the selected provider without fallback.
  */
 import { z } from "zod";
 import type { LearningLanguage, ProviderKey } from "../constants";
@@ -233,8 +233,8 @@ function parseProviderJson(content: unknown) {
 
 export async function testProviderConnection(providerName: ProviderKey) {
   const provider = await AIProvider.findOne({ provider: providerName }).lean();
-  // الاختبار يتصل بهذا المزوّد وحده حتى لو لم يُفعّل ضمن ترتيب التوليد بعد.
-  // لا نستخدم fallback هنا، كي لا يظهر المفتاح المعطّل كأنه ناجح.
+  // Test only this provider, even if it is not enabled for generation yet.
+  // Do not fall back to another provider, which could make an invalid key appear to work.
   if (
     !provider?.encryptedApiKey ||
     !provider.baseUrl ||

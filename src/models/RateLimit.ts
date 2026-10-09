@@ -1,5 +1,5 @@
 /**
- * عداد نافذة المحاولات بمفتاح فريد، مع فهرس TTL لتنظيف السجلات المنتهية.
+ * Request-window counter with a unique key and a TTL index to remove expired records.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

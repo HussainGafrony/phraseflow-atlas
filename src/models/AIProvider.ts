@@ -1,5 +1,5 @@
 /**
- * إعدادات مزوّد نص واحد: الأولوية والتفعيل والموديل والمسارات والمفتاح المشفر.
+ * Text provider configuration: priority, enabled status, model, endpoints, and encrypted API key.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * واجهة جمل اليوم: اختيار المعايير لليونانية، استعادة حالة اليوم من السيرفر، طلب دفعات، حفظ الجمل وإظهار تقدم المواضيع.
+ * Daily Greek learning interface: select criteria, restore server state, request batches, save sentences, and display topic progress.
  */
 
 import { useCallback, useEffect, useState } from "react";

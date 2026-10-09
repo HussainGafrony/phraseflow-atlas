@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * بطاقة الجملة وترجمتها العربية. الاستماع بصوت الجهاز فقط دون تخزين أو استدعاء خدمة صوت.
+ * Sentence card with an Arabic translation. Playback uses device speech only, without audio storage or a speech API.
  */
 
 import { useEffect, useState } from "react";
@@ -32,7 +32,7 @@ export function SentenceCard({ sentence, onSave, saving }: SentenceCardProps) {
 
   const [playing, setPlaying] = useState(false);
   const [notice, setNotice] = useState("");
-  // النطق من الجهاز فقط؛ لا طلب لخدمة صوت ولا تخزين ملف أو رابط.
+  // Use device speech only; do not request, store, or link to an audio file.
   useEffect(
     () => () => {
       window.speechSynthesis?.cancel();
@@ -48,7 +48,7 @@ export function SentenceCard({ sentence, onSave, saving }: SentenceCardProps) {
     try {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(sentence.text);
-      // ندعم نطق المحفوظات القديمة أيضاً دون إعادتها لقائمة لغات التعلم.
+      // Keep pronunciation available for older saved sentences without restoring their languages to the learning selector.
       utterance.lang =
         language?.speechCode ??
         { german: "de-DE", english: "en-US" }[sentence.language] ??

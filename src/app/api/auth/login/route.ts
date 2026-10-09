@@ -1,5 +1,5 @@
 /**
- * دخول الحساب: تحديد محاولات عنوان العميل، التحقق من كلمة المرور والدور، ثم وضع cookie الجلسة.
+ * Rate-limit login attempts by client IP, verify credentials and role, then set the session cookie.
  */
 import {
   ENV_ADMIN_ID,
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       });
       return NextResponse.json({ ok: true, redirectTo: "/admin" });
     }
-    // الحسابات المخزنة تقبل دور الأدمن أيضاً، مع فصل البوابتين وعدم تحويل دور المستخدم.
+    // Stored accounts may also be administrators. Keep the portals separate and never promote a user during login.
     const user = await findUserForLogin(body.username, body.expectedRole);
     if (!user || !(await verifyPassword(body.password, user.passwordHash)))
       return jsonError("Username or password is incorrect.", 401);
