@@ -1,5 +1,5 @@
 /**
- * مدخل الأدمن المستقل؛ بياناته من متغيرات بيئة السيرفر ولا توجد صفحة لإنشائه.
+ * مدخل الأدمن المستقل؛ يدعم حساب البيئة وحسابات الأدمن في MongoDB.
  */
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";

@@ -1,45 +1,51 @@
 # PhraseFlow Atlas
 
-Language learning with German, English and Greek sentences and Arabic translations. The interface supports Arabic (default) and Greek.
+Greek sentence learning with Arabic translations. The interface supports Arabic (default) and Greek.
 
 ## Setup
 
 1. Copy `.env.example` to `.env.local`.
-2. Set `MONGODB_URI`, `SESSION_SECRET` (at least 32 characters), `APP_ENCRYPTION_KEY`, `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
-3. Run `npm install`, then `npm run dev`.
+2. Set `MONGODB_URI`, `SESSION_SECRET` (at least 32 characters) and `APP_ENCRYPTION_KEY` for existing AI provider secrets.
+3. Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` to enable an environment administrator. Existing MongoDB administrator accounts can also sign in.
+4. Run `npm install`, then `npm run dev`.
 
-The administrator is read **only from server environment variables**, never created in MongoDB. Username: 3–40 characters, case insensitive; password: 8–120 characters, case sensitive. Changing either credential invalidates existing administrator sessions. Do not prefix these variables with `NEXT_PUBLIC_` or commit real credentials. On Vercel set them in the project environment and redeploy for changes to take effect.
+Names are stored and compared exactly, including case and spaces. Username/password length restrictions have been removed; values must still be non-empty. Old normalized names remain stored as before, so enter those exact existing names. Account creation supports `user` and `admin`, and only an authenticated administrator can create either. The environment administrator name is no longer reserved for database accounts. On admin login, matching environment credentials are checked first, followed by the database administrator account.
 
-There is no setup page or seed-admin command. Old database admin accounts cannot sign in. MongoDB is still required for rate limits and creating user accounts.
+Never commit real credentials or expose secrets using a `NEXT_PUBLIC_` prefix.
 
-## Routes and permissions
+## Current behavior
+
+- Greek is the only language accepted for new learning requests. There is no learning-language selector or English default.
+- Four five-sentence batches per user per day, capped at 20 using a MongoDB transaction. No unlock code, ten-sentence gate or unlock API.
+- Save sentences, restore today's unsaved sentences, review saves grouped by day and view per-topic saved/delivered percentages.
+- Listening uses the browser/device speech service only. The app does not call a speech-generation API, upload audio, save audio URLs, or use Vercel Blob.
+- Old saved sentences remain readable and can still use device pronunciation. Existing remote audio objects and database records were not deleted by this code change; they are no longer used by the application.
+- The public page shows four fixed Greek sentences: active stored Greek content, completed with a fixed Greek set if needed. No weekly rotation, AI generation for the public page, cron endpoint or cron configuration.
+- UI remains Arabic/Greek, with local preference persistence and RTL/LTR.
+
+## Sessions and routes
+
+Cookies have no `maxAge` or `expires`: they are browser-session cookies. JWT signature verification, role checks, HttpOnly, SameSite and production Secure flags remain. JWTs expire after seven days as a server-side upper bound. Some browsers restore session cookies when restoring a previous session; this is not a promise of deletion on every browser close. Logout explicitly deletes the cookie. Changing administrator credentials does not automatically revoke existing signed sessions anymore.
 
 | Route | Access |
 | --- | --- |
-| `/` | Public weekly sentences |
+| `/` | Fixed public Greek sentences |
 | `/login` | User login |
-| `/user` | Alias: user dashboard, or user login when signed out |
+| `/admin/login` | Environment or database administrator login |
+| `/user` | Redirect to user dashboard or login |
 | `/dashboard`, `/saved` | User session required |
-| `/admin/login` | Environment administrator login |
-| `/admin` | Environment administrator; create ordinary accounts only |
-| `/api/admin/users` | Administrator POST only; GET/PUT/DELETE unsupported |
-| Unknown routes, including `/admin/setup` | 404 |
+| `/admin` | Create user or administrator accounts |
+| `POST /api/admin/users` | Administrator only; no account listing/editing/deletion |
+| Unknown or removed routes | 404 |
 
-Wrong-role page requests redirect to that account's home. APIs reject wrong roles. Login redirects use fixed internal paths. Editing a URL does not grant access. Logout clears the session and returns to the public page.
+## Services and environment
 
-## Features and configuration limits
+AI text generation still uses enabled, encrypted MongoDB provider profiles with priority fallback across OpenAI, Gemini, Claude, DeepSeek and Grok. There is no admin provider-settings interface. A new installation must provision those profiles separately. No enabled provider means generation fails without consuming the allowance.
 
-- Daily five-sentence batches: 5 + 5, unlock, 5 + 5, capped at 20 using a MongoDB transaction.
-- Saved sentences grouped by day, restoration of today's unsaved sentences, duplicate checks and per-topic progress.
-- Shared MongoDB rate limits for login, generation, unlock, audio and account creation.
-- Existing database AI provider profiles and encrypted audio settings continue to work.
-- Audio generated once and stored in private Vercel Blob, with authenticated playback; device voice fallback when unavailable.
-- Weekly public sentence rotation and a curated fallback; `CRON_SECRET` protects the scheduled route.
+`MONGODB_DB_NAME` overrides the URI database; otherwise the URI name or `phraseflow-atlas` is used. `APP_TIME_ZONE` defines daily boundaries. `NEXT_PUBLIC_APP_NAME` sets the display name. `APP_ENCRYPTION_KEY` must remain compatible with saved provider secrets. `CRON_SECRET`, `BLOB_READ_WRITE_TOKEN` and `ADMIN_SETUP_TOKEN` are no longer used.
 
-The admin panel intentionally **has no provider, audio, unlock-code, learning-options or public-sentence settings**, no user list and no edit/delete/reset-password actions. Existing database configuration remains in use, but new installations need that configuration provisioned separately. AI/API keys are **not** automatically read from new environment variable names. No enabled provider means no new generated sentences; no active stored unlock code means the extra ten daily sentences cannot be unlocked. See [FEATURE_STATUS.md](FEATURE_STATUS.md) for the full audit.
-
-`MONGODB_DB_NAME` overrides the database in `MONGODB_URI`; fallback is `phraseflow-atlas`. `APP_TIME_ZONE` defines the daily reset. `BLOB_READ_WRITE_TOKEN` may supply the private Blob token; audio provider settings still come from MongoDB. Preserve `APP_ENCRYPTION_KEY` to decrypt existing settings.
+MongoDB is needed for login rate limiting even for the environment administrator. Remaining limits: login 12/15 minutes per IP, generation 8/minute per user, account creation 20/minute per administrator.
 
 ## Verification
 
-`npm test` and `npm run build` check behavior, types and build output. Automated tests use mocked MongoDB/AI/Blob boundaries; they do not establish that production credentials or Atlas transactions work. See [CODE_GUIDE.md](CODE_GUIDE.md) for feature locations and comments.
+`npm test` and `npm run build` check behavior, types and build output. Tests mock database and provider boundaries; production credentials and Atlas transactions still need live verification. See [CODE_GUIDE.md](CODE_GUIDE.md) and [FEATURE_STATUS.md](FEATURE_STATUS.md).

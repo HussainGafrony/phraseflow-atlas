@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * بطاقة الجملة وترجمتها العربية. الاستماع يعيد استخدام الصوت المخزن، أو يطلب توليده؛ صوت الجهاز بديل واضح عند غياب خدمة الصوت.
+ * بطاقة الجملة وترجمتها العربية. الاستماع بصوت الجهاز فقط دون تخزين أو استدعاء خدمة صوت.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SUPPORTED_LANGUAGES } from "@/lib/constants";
 import { useI18n } from "./I18nProvider";
 
@@ -16,7 +16,6 @@ export type SentenceView = {
   frequency: string;
   text: string;
   arabicTranslation: string;
-  audioUrl?: string;
 };
 
 type SentenceCardProps = {
@@ -33,48 +32,38 @@ export function SentenceCard({ sentence, onSave, saving }: SentenceCardProps) {
 
   const [playing, setPlaying] = useState(false);
   const [notice, setNotice] = useState("");
-  const [savedAudio, setSavedAudio] = useState(sentence.audioUrl);
-  async function listen() {
-    setPlaying(true);
+  // النطق من الجهاز فقط؛ لا طلب لخدمة صوت ولا تخزين ملف أو رابط.
+  useEffect(
+    () => () => {
+      window.speechSynthesis?.cancel();
+    },
+    [],
+  );
+  function listen() {
     setNotice("");
-    try {
-      let url = savedAudio;
-      if (!url) {
-        const response = await fetch("/api/sentences/audio", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sentenceId: sentence.id }),
-        });
-        if (response.ok) {
-          url = (await response.json()).audioUrl;
-          setSavedAudio(url);
-        }
-      }
-      if (url) {
-        const audio = new Audio(url);
-        audio.onended = () => setPlaying(false);
-        audio.onerror = () => {
-          setPlaying(false);
-          setNotice("Audio unavailable. Try again later.");
-        };
-        await audio.play();
-        setNotice("AI-generated audio");
-        return;
-      }
-      if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(sentence.text);
-        utterance.lang = language?.speechCode ?? "en-US";
-        utterance.onend = () => setPlaying(false);
-        utterance.onerror = () => setPlaying(false);
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-        setNotice("Using device voice");
-        return;
-      }
-      throw new Error("No audio available");
-    } catch {
+    if (!("speechSynthesis" in window)) {
       setNotice("Audio unavailable. Try again later.");
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(sentence.text);
+      // ندعم نطق المحفوظات القديمة أيضاً دون إعادتها لقائمة لغات التعلم.
+      utterance.lang =
+        language?.speechCode ??
+        { german: "de-DE", english: "en-US" }[sentence.language] ??
+        "el-GR";
+      utterance.onend = () => setPlaying(false);
+      utterance.onerror = () => {
+        setPlaying(false);
+        setNotice("Audio unavailable. Try again later.");
+      };
+      setPlaying(true);
+      window.speechSynthesis.speak(utterance);
+      setNotice("Using device voice");
+    } catch {
       setPlaying(false);
+      setNotice("Audio unavailable. Try again later.");
     }
   }
 

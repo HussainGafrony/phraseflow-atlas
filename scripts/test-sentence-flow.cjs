@@ -8,7 +8,6 @@ const ts = require("typescript");
 
 function fixture({
   total = 0,
-  unlocked = false,
   generationFails = false,
   deliveryFails = false,
   generatedCount = 9,
@@ -17,7 +16,6 @@ function fixture({
     _id: "usage",
     totalDelivered: total,
     batchesDelivered: 0,
-    unlocked,
   };
   let delivered = [];
   let records = [];
@@ -68,11 +66,9 @@ function fixture({
     "./constants": {
       DAILY_BATCH_SIZE: 5,
       DAILY_SENTENCE_LIMIT: 20,
-      UNLOCK_AFTER_SENTENCES: 10,
     },
     "./crypto": { createStableHash: (value) => value },
     "./dates": { getDayKey: () => "2026-10-08" },
-    "./tts": { generateAudioUrlOnce: async () => "" },
     "./ai/service": {
       async generateSentences() {
         if (generationFails) throw new Error("Provider failed");
@@ -90,7 +86,8 @@ function fixture({
           if (update.$setOnInsert) return { ...usage };
           if (
             filter.totalDelivered !== usage.totalDelivered ||
-            filter.unlocked !== usage.unlocked
+            usage.totalDelivered + update.$inc.totalDelivered >
+              filter.$expr.$lte[1]
           )
             return null;
           usage.totalDelivered += update.$inc.totalDelivered;
@@ -146,27 +143,22 @@ function fixture({
     },
   });
   const criteria = {
-    language: "english",
+    language: "greek",
     topic: "Travel",
     level: "A1",
     frequency: "common",
   };
   return {
     request: () => exports.getTodaySentencesForUser("user", criteria),
-    unlock: () => {
-      usage.unlocked = true;
-    },
     usage: () => usage,
     delivered: () => delivered,
   };
 }
 
-test("two batches, unlock, two batches, then a hard daily limit", async () => {
+test("four batches without any unlock, then a hard daily limit", async () => {
   const app = fixture();
   assert.equal((await app.request()).sentences.length, 5);
-  assert.equal((await app.request()).needsUnlock, true);
-  assert.equal((await app.request()).status, "unlock-required");
-  app.unlock();
+  assert.equal((await app.request()).remaining, 10);
   assert.equal((await app.request()).remaining, 5);
   assert.equal((await app.request()).remaining, 0);
   assert.equal((await app.request()).status, "limit-reached");
@@ -186,7 +178,7 @@ test("delivery failure rolls back the allowance and delivery records", async () 
   assert.equal(app.delivered().length, 0);
 });
 
-test("simultaneous requests cannot cross the locked ten-sentence boundary", async () => {
+test("simultaneous requests charge and deliver only one batch for a counter version", async () => {
   const app = fixture({ total: 5 });
   const results = await Promise.all([app.request(), app.request()]);
   assert.equal(results.filter((result) => result.status === "ok").length, 1);
@@ -203,7 +195,7 @@ test("an incomplete batch is not delivered or charged", async () => {
 });
 
 test("simultaneous requests cannot exceed the final daily allowance", async () => {
-  const app = fixture({ total: 15, unlocked: true });
+  const app = fixture({ total: 15 });
   const results = await Promise.all([app.request(), app.request()]);
   assert.equal(results.filter((result) => result.status === "ok").length, 1);
   assert.equal(app.usage().totalDelivered, 20);

@@ -1,21 +1,37 @@
-/** ترجمات الواجهة ورسائلها: عربية ويونانية فقط. */
+/** ترجمات واجهة العربية واليونانية ورسائلها. */
 export const uiPhrases: Record<string, { ar: string; el: string }> = {
-  "The administrator can only create user accounts.": {
-    ar: "صلاحية الأدمن هي إنشاء حسابات مستخدمين فقط.",
-    el: "Ο διαχειριστής μπορεί μόνο να δημιουργεί λογαριασμούς χρηστών.",
+  "Learn Greek": {
+    ar: "تعلّم اليونانية",
+    el: "Μάθε ελληνικά",
   },
-  "Page not found": { ar: "الصفحة غير موجودة", el: "Η σελίδα δεν βρέθηκε" },
+  "Choose a topic and a level. Learn Greek with Arabic translations, listening, saving, and progress tracking.":
+    {
+      ar: "اختر الموضوع والمستوى. تعلّم اليونانية بترجمة عربية واستماع وحفظ ومتابعة التقدم.",
+      el: "Επίλεξε θέμα και επίπεδο. Μάθε ελληνικά με αραβικές μεταφράσεις, ακρόαση, αποθήκευση και παρακολούθηση προόδου.",
+    },
+  "Create account": {
+    ar: "إنشاء حساب",
+    el: "Δημιουργία λογαριασμού",
+  },
+  "Create a user or administrator account.": {
+    ar: "أنشئ حساب مستخدم أو أدمن.",
+    el: "Δημιούργησε λογαριασμό χρήστη ή διαχειριστή.",
+  },
+  "Account type": {
+    ar: "نوع الحساب",
+    el: "Τύπος λογαριασμού",
+  },
+  User: {
+    ar: "مستخدم",
+    el: "Χρήστης",
+  },
+  "Page not found": {
+    ar: "الصفحة غير موجودة",
+    el: "Η σελίδα δεν βρέθηκε",
+  },
   "This link does not exist. Choose a destination below.": {
     ar: "هذا الرابط غير موجود. اختر إحدى الصفحات التالية.",
     el: "Αυτός ο σύνδεσμος δεν υπάρχει. Επίλεξε μία από τις παρακάτω σελίδες.",
-  },
-  "Admin credentials are not configured on the server.": {
-    ar: "بيانات دخول الأدمن غير مضبوطة على السيرفر.",
-    el: "Τα στοιχεία διαχειριστή δεν έχουν ρυθμιστεί στον διακομιστή.",
-  },
-  "This username is reserved for the administrator.": {
-    ar: "اسم المستخدم هذا محجوز للأدمن.",
-    el: "Αυτό το όνομα χρήστη προορίζεται για τον διαχειριστή.",
   },
   "AI provider settings saved.": {
     ar: "تم حفظ إعدادات المزوّدين.",
@@ -41,10 +57,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "إضافة جملة",
     el: "Προσθήκη πρότασης",
   },
-  "Admin code": {
-    ar: "رمز الأدمن",
-    el: "Κωδικός διαχειριστή",
-  },
   "Admin created. Redirecting to login...": {
     ar: "تم إنشاء الأدمن. جارٍ الانتقال للدخول…",
     el: "Ο διαχειριστής δημιουργήθηκε. Μετάβαση στη σύνδεση…",
@@ -66,34 +78,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "الترجمة العربية",
     el: "Αραβική μετάφραση",
   },
-  "Ask the admin for today's unlock code to continue.": {
-    ar: "اطلب رمز اليوم من الأدمن للمتابعة.",
-    el: "Ζήτησε τον σημερινό κωδικό από τον διαχειριστή.",
-  },
-  "Audio API key": {
-    ar: "مفتاح خدمة الصوت",
-    el: "Κλειδί API ήχου",
-  },
-  "Audio and storage": {
-    ar: "الصوت والتخزين",
-    el: "Ήχος και αποθήκευση",
-  },
-  "Audio endpoint": {
-    ar: "مسار توليد الصوت",
-    el: "Διαδρομή API ήχου",
-  },
-  "Audio generated and stored successfully.": {
-    ar: "تم توليد الصوت وتخزينه.",
-    el: "Ο ήχος δημιουργήθηκε και αποθηκεύτηκε.",
-  },
-  "Audio model": {
-    ar: "موديل الصوت",
-    el: "Μοντέλο ήχου",
-  },
-  "Audio settings saved.": {
-    ar: "تم حفظ إعدادات الصوت.",
-    el: "Οι ρυθμίσεις ήχου αποθηκεύτηκαν.",
-  },
   "Base URL": {
     ar: "الرابط الأساسي",
     el: "Βασική διεύθυνση URL",
@@ -102,11 +86,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "جارٍ التحقق…",
     el: "Έλεγχος…",
   },
-  "Choose a language, a topic, and a level. Get fresh daily sentences with Arabic translation, listening, saving, and progress tracking.":
-    {
-      ar: "اختر اللغة والموضوع والمستوى وتعلم جملاً يومية بترجمة عربية وصوت وحفظ ومتابعة التقدم.",
-      el: "Διάλεξε γλώσσα, θέμα και επίπεδο. Μάθε νέες προτάσεις με αραβική μετάφραση, ήχο, αποθήκευση και πρόοδο.",
-    },
   Code: {
     ar: "الرمز",
     el: "Κωδικός",
@@ -172,10 +151,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "جارٍ الإنشاء…",
     el: "Δημιουργία…",
   },
-  "Daily unlock code": {
-    ar: "رمز الفتح اليومي",
-    el: "Ημερήσιος κωδικός ξεκλειδώματος",
-  },
   Enabled: {
     ar: "مفعّل",
     el: "Ενεργοποιημένο",
@@ -187,10 +162,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
   "Generating...": {
     ar: "جارٍ التوليد…",
     el: "Δημιουργία…",
-  },
-  "German · English · Greek": {
-    ar: "الألمانية · الإنجليزية · اليونانية",
-    el: "Γερμανικά · Αγγλικά · Ελληνικά",
   },
   Label: {
     ar: "اسم العرض",
@@ -264,10 +235,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "الأولوية",
     el: "Προτεραιότητα",
   },
-  "Private Blob token": {
-    ar: "مفتاح تخزين Blob الخاص",
-    el: "Κλειδί ιδιωτικού χώρου Blob",
-  },
   "Provider test failed.": {
     ar: "فشل اختبار المزوّد.",
     el: "Ο έλεγχος παρόχου απέτυχε.",
@@ -287,14 +254,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
   "Save a sentence from today’s list and it will appear here.": {
     ar: "احفظ جملة من قائمة اليوم لتظهر هنا.",
     el: "Αποθήκευσε μια σημερινή πρόταση για να εμφανιστεί εδώ.",
-  },
-  "Save and test audio": {
-    ar: "حفظ واختبار الصوت",
-    el: "Αποθήκευση και δοκιμή ήχου",
-  },
-  "Save audio settings": {
-    ar: "حفظ إعدادات الصوت",
-    el: "Αποθήκευση ρυθμίσεων ήχου",
   },
   "Save code": {
     ar: "حفظ الرمز",
@@ -340,11 +299,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "مسار توليد النص",
     el: "Διαδρομή API κειμένου",
   },
-  "The user receives 10 sentences first. After that, this code unlocks two more batches for the same day.":
-    {
-      ar: "يحصل المستخدم على 10 جمل أولاً، ثم يفتح الرمز دفعتين إضافيتين في اليوم نفسه.",
-      el: "Μετά τις 10 προτάσεις, ο κωδικός ξεκλειδώνει δύο ακόμη ομάδες την ίδια ημέρα.",
-    },
   "This direct link opens the admin area only.": {
     ar: "هذا الرابط مخصص للأدمن.",
     el: "Αυτός ο σύνδεσμος ανοίγει μόνο τη διαχείριση.",
@@ -365,28 +319,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "الواجهة",
     el: "Διεπαφή",
   },
-  Unlock: {
-    ar: "فتح",
-    el: "Ξεκλείδωμα",
-  },
-  "Unlock code saved. Give this code to the user after the first 10 sentences.":
-    {
-      ar: "تم حفظ الرمز. أعطه للمستخدم بعد أول 10 جمل.",
-      el: "Ο κωδικός αποθηκεύτηκε. Δώσε τον μετά τις πρώτες 10 προτάσεις.",
-    },
-  "Unlock failed.": {
-    ar: "تعذر الفتح.",
-    el: "Το ξεκλείδωμα απέτυχε.",
-  },
-  "Unlocked. You can request two more batches today.": {
-    ar: "تم الفتح. يمكنك طلب دفعتين إضافيتين اليوم.",
-    el: "Ξεκλειδώθηκε. Μπορείς να ζητήσεις δύο ακόμη ομάδες σήμερα.",
-  },
-  "Use an OpenAI-compatible speech service and a private Vercel Blob store. Keys are encrypted. Save and test to verify generation, storage, and playback.":
-    {
-      ar: "استخدم خدمة صوت متوافقة مع OpenAI وتخزين Vercel Blob خاصاً. تُشفّر المفاتيح. احفظ واختبر التوليد والتخزين والاستماع.",
-      el: "Χρησιμοποίησε υπηρεσία ομιλίας συμβατή με OpenAI και ιδιωτικό Vercel Blob. Τα κλειδιά κρυπτογραφούνται. Έλεγξε δημιουργία, αποθήκευση και αναπαραγωγή.",
-    },
   "User created.": {
     ar: "تم إنشاء المستخدم.",
     el: "Ο χρήστης δημιουργήθηκε.",
@@ -398,10 +330,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
   Voice: {
     ar: "الصوت",
     el: "Φωνή",
-  },
-  "Weekly public sentences": {
-    ar: "جمل الأسبوع العامة",
-    el: "Δημόσιες προτάσεις της εβδομάδας",
   },
   "Welcome,": {
     ar: "أهلاً،",
@@ -435,10 +363,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "الصوت غير متاح. حاول لاحقاً.",
     el: "Ο ήχος δεν είναι διαθέσιμος. Δοκίμασε αργότερα.",
   },
-  "AI-generated audio": {
-    ar: "صوت مولّد بالذكاء الاصطناعي",
-    el: "Ήχος δημιουργημένος με AI",
-  },
   "Using device voice": {
     ar: "استخدام صوت الجهاز",
     el: "Χρήση φωνής συσκευής",
@@ -463,10 +387,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
     ar: "اسم المستخدم موجود مسبقاً.",
     el: "Το όνομα χρήστη υπάρχει ήδη.",
   },
-  "Unlock code is incorrect.": {
-    ar: "رمز الفتح غير صحيح.",
-    el: "Λανθασμένος κωδικός ξεκλειδώματος.",
-  },
   "Provider is not enabled.": {
     ar: "المزوّد غير مفعّل.",
     el: "Ο πάροχος δεν είναι ενεργός.",
@@ -484,10 +404,6 @@ export const uiPhrases: Record<string, { ar: string; el: string }> = {
       ar: "لا يوجد مزوّد متاح. اطلب من الأدمن ضبطه أو اختباره. لم تُخصم حصتك اليومية.",
       el: "Δεν υπάρχει διαθέσιμος πάροχος AI. Ζήτησε ρύθμιση ή έλεγχο από τον διαχειριστή. Το όριό σου δεν μειώθηκε.",
     },
-  "Configure and enable audio generation and private Blob storage first.": {
-    ar: "اضبط وفعّل الصوت وتخزين Blob الخاص أولاً.",
-    el: "Ρύθμισε πρώτα τον ήχο και τον ιδιωτικό χώρο Blob.",
-  },
   "Audio is already being generated. Please try again shortly.": {
     ar: "جارٍ توليد الصوت بالفعل. حاول بعد قليل.",
     el: "Ο ήχος δημιουργείται ήδη. Δοκίμασε σε λίγο.",

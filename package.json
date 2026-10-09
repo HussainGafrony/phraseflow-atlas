@@ -8,11 +8,9 @@
     "build": "node --require ./scripts/node-memory-patch.cjs ./node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "next lint",
-    "seed:landing": "node scripts/seed-landing.mjs",
     "test": "node --test scripts/test-*.cjs"
   },
   "dependencies": {
-    "@vercel/blob": "2.7.0",
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
     "mongoose": "^8.7.2",

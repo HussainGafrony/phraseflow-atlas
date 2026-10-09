@@ -16,7 +16,6 @@ const aiProviderSchema = new Schema(
     model: { type: String, default: "" },
     baseUrl: { type: String, default: "" },
     textEndpoint: { type: String, default: "" },
-    audioEndpoint: { type: String, default: "" },
     encryptedApiKey: { type: String, default: "" },
   },
   { timestamps: true },

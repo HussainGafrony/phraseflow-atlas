@@ -14,8 +14,6 @@ const dailyUsageSchema = new Schema(
     dayKey: { type: String, required: true, index: true },
     totalDelivered: { type: Number, default: 0 },
     batchesDelivered: { type: Number, default: 0 },
-    unlocked: { type: Boolean, default: false },
-    unlockedAt: { type: Date },
   },
   { timestamps: true },
 );

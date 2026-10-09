@@ -1,7 +1,7 @@
 /**
  * جلسات الدخول: تشفير كلمات المرور بـ bcrypt، توقيع JWT داخل cookie آمن، وفصل صلاحيات الأدمن عن المستخدم في الصفحات والـ API.
  */
-import { adminCredentialVersion, isCurrentAdminSession } from "./admin-env";
+import { ENV_ADMIN_ID } from "./admin-env";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
@@ -39,9 +39,6 @@ export async function createSessionToken(session: AppSession) {
   return new SignJWT({
     username: session.username,
     role: session.role,
-    ...(session.role === "admin"
-      ? { adminVersion: adminCredentialVersion() }
-      : {}),
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(session.userId)
@@ -59,7 +56,7 @@ export async function setSessionCookie(session: AppSession) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    // Session cookie بلا maxAge أو expires: لا نطلب تذكّر الدخول بين جلسات المتصفح.
   });
 }
 
@@ -85,9 +82,11 @@ export async function getSession(): Promise<AppSession | null> {
       !["user", "admin"].includes(String(payload.role))
     )
       return null;
-    if (payload.role === "admin" && !isCurrentAdminSession(payload))
-      return null;
-    if (payload.role === "user" && !/^[a-f0-9]{24}$/i.test(payload.sub))
+    // توقيع JWT والدور مطلوبان حتى للجلسة غير الدائمة. الأدمن إما من البيئة أو MongoDB.
+    if (
+      !(payload.role === "admin" && payload.sub === ENV_ADMIN_ID) &&
+      !/^[a-f0-9]{24}$/i.test(payload.sub)
+    )
       return null;
 
     return {
@@ -122,10 +121,13 @@ export async function requirePageSession(role?: SessionRole) {
   return session;
 }
 
-export async function findUserForLogin(username: string) {
+export async function findUserForLogin(
+  username: string,
+  role: SessionRole = "user",
+) {
   await dbConnect();
   return User.findOne({
-    username: username.toLowerCase().trim(),
-    role: "user",
+    username,
+    role,
   });
 }

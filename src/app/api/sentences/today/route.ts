@@ -17,7 +17,7 @@ import { SentenceDelivery } from "@/models/SentenceDelivery";
 import { SavedSentence } from "@/models/SavedSentence";
 import { Sentence } from "@/models/Sentence";
 import { getDayKey } from "@/lib/dates";
-import { DAILY_SENTENCE_LIMIT, UNLOCK_AFTER_SENTENCES } from "@/lib/constants";
+import { DAILY_SENTENCE_LIMIT } from "@/lib/constants";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -56,7 +56,6 @@ export async function POST(request: Request) {
         frequency: sentence.frequency,
         text: sentence.text,
         arabicTranslation: sentence.arabicTranslation,
-        audioUrl: sentence.audioUrl,
       })),
     });
   } catch (error) {
@@ -96,10 +95,6 @@ export async function GET() {
       {
         dayKey,
         remaining: Math.max(0, DAILY_SENTENCE_LIMIT - total),
-        needsUnlock:
-          total >= UNLOCK_AFTER_SENTENCES &&
-          total < DAILY_SENTENCE_LIMIT &&
-          !usage?.unlocked,
         sentences: ids.flatMap((id) => {
           const sentence = byId.get(String(id));
           return sentence
@@ -112,7 +107,6 @@ export async function GET() {
                   frequency: sentence.frequency,
                   text: sentence.text,
                   arabicTranslation: sentence.arabicTranslation,
-                  audioUrl: sentence.audioUrl,
                 },
               ]
             : [];

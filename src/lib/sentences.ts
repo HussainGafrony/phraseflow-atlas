@@ -5,14 +5,12 @@ import mongoose from "mongoose";
 import {
   DAILY_BATCH_SIZE,
   DAILY_SENTENCE_LIMIT,
-  UNLOCK_AFTER_SENTENCES,
   type FrequencyLevel,
   type LearningLanguage,
 } from "./constants";
 import { createStableHash } from "./crypto";
 import { getDayKey } from "./dates";
 import { generateSentences } from "./ai/service";
-import { generateAudioUrlOnce } from "./tts";
 import { DailyUsage } from "@/models/DailyUsage";
 import { Sentence } from "@/models/Sentence";
 import { SentenceDelivery } from "@/models/SentenceDelivery";
@@ -50,22 +48,8 @@ export async function getTodaySentencesForUser(
     };
   }
 
-  if (usage.totalDelivered >= UNLOCK_AFTER_SENTENCES && !usage.unlocked) {
-    return {
-      status: "unlock-required" as const,
-      dayKey,
-      remaining: DAILY_SENTENCE_LIMIT - usage.totalDelivered,
-      sentences: [],
-    };
-  }
-
-  const phaseLimit = usage.unlocked
-    ? DAILY_SENTENCE_LIMIT
-    : UNLOCK_AFTER_SENTENCES;
-  const availableInPhase = phaseLimit - usage.totalDelivered;
   const count = Math.min(
     DAILY_BATCH_SIZE,
-    availableInPhase,
     DAILY_SENTENCE_LIMIT - usage.totalDelivered,
   );
 
@@ -102,10 +86,12 @@ export async function getTodaySentencesForUser(
         {
           _id: usage._id,
           totalDelivered: usage.totalDelivered,
-          unlocked: usage.unlocked,
-          // شرط ذرّي داخل قاعدة البيانات: لا يتجاوز الطلب حاجز 10 أو 20.
+          // شرط ذرّي داخل قاعدة البيانات: لا يتجاوز الطلب الحد اليومي 20.
           $expr: {
-            $lte: [{ $add: ["$totalDelivered", sentences.length] }, phaseLimit],
+            $lte: [
+              { $add: ["$totalDelivered", sentences.length] },
+              DAILY_SENTENCE_LIMIT,
+            ],
           },
         },
         { $inc: { totalDelivered: sentences.length, batchesDelivered: 1 } },
@@ -139,10 +125,6 @@ export async function getTodaySentencesForUser(
   return {
     status: "ok" as const,
     dayKey,
-    needsUnlock:
-      totalDelivered >= UNLOCK_AFTER_SENTENCES &&
-      !usage.unlocked &&
-      totalDelivered < DAILY_SENTENCE_LIMIT,
     remaining: DAILY_SENTENCE_LIMIT - totalDelivered,
     sentences,
   };
@@ -188,7 +170,6 @@ async function buildUniqueSentences(
       arabicTranslation: candidate.arabicTranslation,
       sourceProvider: candidate.sourceProvider,
       hash,
-      audioUrl: await generateAudioUrlOnce(candidate.text, criteria.language),
     }).catch((error) => {
       // قد يضيف طلب آخر النص نفسه بعد فحص الوجود؛ الفهرس الفريد هو الحكم النهائي.
       if (error?.code === 11000) return null;
