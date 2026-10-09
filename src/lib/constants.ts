@@ -3,21 +3,10 @@
  */
 export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "PhraseFlow Atlas";
 
+export const LEARNING_LANGUAGE = "greek" as const;
 export const SUPPORTED_LANGUAGES = [
   {
-    value: "german",
-    label: "German",
-    nativeLabel: "Deutsch",
-    speechCode: "de-DE",
-  },
-  {
-    value: "english",
-    label: "English",
-    nativeLabel: "English",
-    speechCode: "en-US",
-  },
-  {
-    value: "greek",
+    value: LEARNING_LANGUAGE,
     label: "Greek",
     nativeLabel: "Ελληνικά",
     speechCode: "el-GR",
@@ -45,7 +34,6 @@ export const FREQUENCIES = [
 
 export const DAILY_SENTENCE_LIMIT = 20;
 export const DAILY_BATCH_SIZE = 5;
-export const UNLOCK_AFTER_SENTENCES = 10;
 
 export const AUTH_COOKIE = "lingua_session";
 
@@ -62,25 +50,26 @@ export type LearningLevel = (typeof LEVELS)[number];
 export type FrequencyLevel = (typeof FREQUENCIES)[number]["value"];
 export type ProviderKey = (typeof PROVIDER_KEYS)[number];
 
+// محتوى ثابت للصفحة العامة؛ لا تدوير أسبوعي ولا توليد تلقائي.
 export const defaultLandingSentences = [
   {
-    language: "german",
-    text: "Guten Morgen! Wie geht es dir heute?",
-    arabicTranslation: "صباح الخير! كيف حالك اليوم؟",
-  },
-  {
-    language: "english",
-    text: "Small steps every day make a big difference.",
-    arabicTranslation: "خطوات صغيرة كل يوم تصنع فرقا كبيرا.",
+    language: "greek",
+    text: "Καλημέρα! Πώς είσαι;",
+    arabicTranslation: "صباح الخير! كيف حالك؟",
   },
   {
     language: "greek",
-    text: "Καλησπέρα! Χαίρομαι που σε βλέπω.",
-    arabicTranslation: "مساء الخير! سعيد برؤيتك.",
+    text: "Ευχαριστώ πολύ.",
+    arabicTranslation: "شكراً جزيلاً.",
   },
   {
-    language: "german",
-    text: "Ich lerne jeden Tag etwas Neues.",
-    arabicTranslation: "أنا أتعلم شيئا جديدا كل يوم.",
+    language: "greek",
+    text: "Χαίρομαι που σε γνωρίζω.",
+    arabicTranslation: "سعيد بلقائك.",
+  },
+  {
+    language: "greek",
+    text: "Μπορείς να το πεις ξανά;",
+    arabicTranslation: "هل يمكنك قول ذلك مرة أخرى؟",
   },
 ] as const;

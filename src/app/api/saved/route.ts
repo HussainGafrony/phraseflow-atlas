@@ -32,7 +32,6 @@ export async function GET() {
           frequency: string;
           text: string;
           arabicTranslation: string;
-          audioUrl?: string;
         };
 
         return {
@@ -47,7 +46,6 @@ export async function GET() {
             frequency: sentence.frequency,
             text: sentence.text,
             arabicTranslation: sentence.arabicTranslation,
-            audioUrl: sentence.audioUrl ?? "",
           },
         };
       }),

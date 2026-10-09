@@ -1,5 +1,5 @@
 /**
- * الصفحة العامة قبل الدخول: أربع جمل الأسبوع مترجمة للعربية وروابط الدخول؛ المحتوى يتغير حسب إعدادات الأسبوع.
+ * الصفحة العامة قبل الدخول: أربع جمل يونانية ثابتة مترجمة للعربية وروابط الدخول؛ دون تغيير أسبوعي.
  */
 import { T } from "@/components/I18nProvider";
 import Link from "next/link";
@@ -31,7 +31,7 @@ export default async function HomePage() {
         <div className="hero-copy">
           <p className="eyebrow">
             {" "}
-            <T k="German · English · Greek" />{" "}
+            <T k="Learn Greek" />{" "}
           </p>
           <h1>
             {" "}
@@ -39,7 +39,7 @@ export default async function HomePage() {
           </h1>
           <p>
             {" "}
-            <T k="Choose a language, a topic, and a level. Get fresh daily sentences with Arabic translation, listening, saving, and progress tracking." />{" "}
+            <T k="Choose a topic and a level. Learn Greek with Arabic translations, listening, saving, and progress tracking." />{" "}
           </p>
           <Link className="primary-link" href="/login">
             {" "}
@@ -47,7 +47,7 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="sentence-marquee" aria-label="Weekly public sentences">
+        <div className="sentence-marquee" aria-label="Public Greek sentences">
           {sentences.slice(0, 4).map((sentence, index) => {
             const language = SUPPORTED_LANGUAGES.find(
               (item) => item.value === sentence.language,

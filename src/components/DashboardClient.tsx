@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * واجهة جمل اليوم: اختيار المعايير، استعادة حالة اليوم من السيرفر، طلب دفعات، فك الحصة، حفظ الجمل وإظهار تقدم المواضيع.
+ * واجهة جمل اليوم: اختيار المعايير لليونانية، استعادة حالة اليوم من السيرفر، طلب دفعات، حفظ الجمل وإظهار تقدم المواضيع.
  */
 
 import { useCallback, useEffect, useState } from "react";
 import {
   FREQUENCIES,
   LEVELS,
-  SUPPORTED_LANGUAGES,
+  LEARNING_LANGUAGE,
   TOPICS,
   DAILY_SENTENCE_LIMIT,
 } from "@/lib/constants";
@@ -29,7 +29,6 @@ type LearningOption = {
 
 export function DashboardClient({ username }: { username: string }) {
   const { t } = useI18n();
-  const [language, setLanguage] = useState<string>("english");
   const [topic, setTopic] = useState<string>(TOPICS[0]);
   const [level, setLevel] = useState<string>(LEVELS[0]);
   const [frequency, setFrequency] = useState<string>(FREQUENCIES[0].value);
@@ -39,8 +38,6 @@ export function DashboardClient({ username }: { username: string }) {
   const [initializing, setInitializing] = useState(true);
   const [selectedProgress, setSelectedProgress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [unlockCode, setUnlockCode] = useState("");
-  const [needsUnlock, setNeedsUnlock] = useState(false);
   const [savingId, setSavingId] = useState("");
   const [progress, setProgress] = useState<ProgressItem[]>([]);
   const [topics, setTopics] = useState<LearningOption[]>(
@@ -94,7 +91,6 @@ export function DashboardClient({ username }: { username: string }) {
     const data = await response.json();
     setSentences(data.sentences ?? []);
     setRemaining(data.remaining);
-    setNeedsUnlock(Boolean(data.needsUnlock));
   }, []);
 
   useEffect(() => {
@@ -115,7 +111,12 @@ export function DashboardClient({ username }: { username: string }) {
       const response = await fetch("/api/sentences/today", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language, topic, level, frequency }),
+        body: JSON.stringify({
+          language: LEARNING_LANGUAGE,
+          topic,
+          level,
+          frequency,
+        }),
       });
 
       const data = await response.json();
@@ -132,17 +133,8 @@ export function DashboardClient({ username }: { username: string }) {
         return;
       }
       setRemaining(data.remaining ?? remaining);
-      setNeedsUnlock(
-        Boolean(data.needsUnlock) || data.status === "unlock-required",
-      );
-
       if (data.status === "limit-reached") {
         setMessage("You reached your 20 sentences for today.");
-        return;
-      }
-
-      if (data.status === "unlock-required") {
-        setMessage("Ask the admin for today's unlock code to continue.");
         return;
       }
 
@@ -155,29 +147,6 @@ export function DashboardClient({ username }: { username: string }) {
       setMessage("Connection failed. Please try again.");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function unlockToday() {
-    try {
-      setMessage("");
-      const response = await fetch("/api/unlock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: unlockCode }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage(data.error ?? "Unlock failed.");
-        return;
-      }
-
-      setNeedsUnlock(false);
-      setUnlockCode("");
-      setMessage("Unlocked. You can request two more batches today.");
-    } catch {
-      setMessage("Connection failed. Please try again.");
     }
   }
 
@@ -221,19 +190,6 @@ export function DashboardClient({ username }: { username: string }) {
       </div>
 
       <div className="control-panel">
-        <label>
-          {t("language")}
-          <select
-            value={language}
-            onChange={(event) => setLanguage(event.target.value)}
-          >
-            {SUPPORTED_LANGUAGES.map((item) => (
-              <option value={item.value} key={item.value}>
-                {t(item.label)}
-              </option>
-            ))}
-          </select>
-        </label>
         <label>
           {t("topic")}
           <select
@@ -280,7 +236,7 @@ export function DashboardClient({ username }: { username: string }) {
           className="primary-button"
           type="button"
           onClick={getSentences}
-          disabled={initializing || loading || remaining <= 0 || needsUnlock}
+          disabled={initializing || loading || remaining <= 0}
         >
           {loading ? t("Generating...") : t("giveMeSentences")}
         </button>
@@ -288,24 +244,6 @@ export function DashboardClient({ username }: { username: string }) {
           {remaining} <T k="sentences left today" />{" "}
         </span>
       </div>
-
-      {needsUnlock ? (
-        <div className="unlock-box">
-          <input
-            value={unlockCode}
-            onChange={(event) => setUnlockCode(event.target.value)}
-            placeholder={t("Admin code")}
-          />
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={unlockToday}
-          >
-            {" "}
-            <T k="Unlock" />{" "}
-          </button>
-        </div>
-      ) : null}
 
       {message ? <p className="form-message">{t(message)}</p> : null}
 

@@ -4,7 +4,6 @@
 import {
   ENV_ADMIN_ID,
   getAdminUsername,
-  isAdminConfigured,
   verifyEnvironmentAdmin,
 } from "@/lib/admin-env";
 import { NextResponse } from "next/server";
@@ -33,14 +32,10 @@ export async function POST(request: Request) {
     }
 
     const body = credentialsSchema.parse(await request.json());
-    if (body.expectedRole === "admin") {
-      if (!isAdminConfigured())
-        return jsonError(
-          "Admin credentials are not configured on the server.",
-          503,
-        );
-      if (!verifyEnvironmentAdmin(body.username, body.password))
-        return jsonError("Username or password is incorrect.", 401);
+    if (
+      body.expectedRole === "admin" &&
+      verifyEnvironmentAdmin(body.username, body.password)
+    ) {
       await setSessionCookie({
         userId: ENV_ADMIN_ID,
         username: getAdminUsername(),
@@ -48,16 +43,19 @@ export async function POST(request: Request) {
       });
       return NextResponse.json({ ok: true, redirectTo: "/admin" });
     }
-    // بوابة المستخدم لا تقبل حساب الأدمن من البيئة ولا حسابات أدمن قديمة في MongoDB.
-    const user = await findUserForLogin(body.username);
+    // الحسابات المخزنة تقبل دور الأدمن أيضاً، مع فصل البوابتين وعدم تحويل دور المستخدم.
+    const user = await findUserForLogin(body.username, body.expectedRole);
     if (!user || !(await verifyPassword(body.password, user.passwordHash)))
       return jsonError("Username or password is incorrect.", 401);
     await setSessionCookie({
       userId: user._id.toString(),
       username: user.username,
-      role: "user",
+      role: user.role,
     });
-    return NextResponse.json({ ok: true, redirectTo: "/dashboard" });
+    return NextResponse.json({
+      ok: true,
+      redirectTo: user.role === "admin" ? "/admin" : "/dashboard",
+    });
   } catch (error) {
     return handleRouteError(error);
   }

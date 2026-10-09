@@ -1,5 +1,5 @@
 /**
- * جمل الصفحة العامة وربط كل مجموعة بأسبوعها وحالة ظهورها.
+ * جمل الصفحة العامة الثابتة وحالة ظهورها.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
@@ -8,7 +8,6 @@ const landingSentenceSchema = new Schema(
     language: { type: String, required: true },
     text: { type: String, required: true },
     arabicTranslation: { type: String, required: true },
-    activeFromWeek: { type: String, required: true, index: true },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true },

@@ -1,5 +1,5 @@
 /**
- * حسابات المستخدمين؛ اسم المستخدم فريد وكلمة السر مخزنة كـ hash. الدور admin محفوظ لتوافق السجلات القديمة فقط ولا يسمح بالدخول.
+ * حسابات المستخدمين والأدمن في MongoDB. الأسماء تُحفظ كما أُدخلت وكلمة السر كـ hash.
  */
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
@@ -9,8 +9,6 @@ const userSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
-      trim: true,
     },
     passwordHash: { type: String, required: true },
     role: {

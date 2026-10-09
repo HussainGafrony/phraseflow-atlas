@@ -1,5 +1,5 @@
 /**
- * صفحة محمية لأدمن البيئة؛ تعرض إنشاء حسابات مستخدمين فقط.
+ * صفحة محمية للأدمن من البيئة أو MongoDB؛ تعرض إنشاء الحسابات.
  */
 import { T } from "@/components/I18nProvider";
 import { AdminPanel } from "@/components/AdminPanel";

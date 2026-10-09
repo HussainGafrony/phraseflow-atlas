@@ -248,7 +248,7 @@ export async function testProviderConnection(providerName: ProviderKey) {
   }
 
   const result = await callProvider(provider, {
-    language: "english",
+    language: "greek",
     topic: "Daily life",
     level: "Beginner",
     frequency: "most-common",

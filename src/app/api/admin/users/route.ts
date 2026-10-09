@@ -1,7 +1,6 @@
 /**
- * إنشاء حساب مستخدم عادي فقط، دون قائمة حسابات أو تعديل أو حذف. لا يُسمح للمستخدم العادي بإنشاء الحسابات.
+ * إنشاء حساب مستخدم أو أدمن، دون قائمة حسابات أو تعديل أو حذف. لا يُسمح للمستخدم العادي بإنشاء الحسابات.
  */
-import { getAdminUsername } from "@/lib/admin-env";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { requireApiSession, hashPassword } from "@/lib/auth";
@@ -26,26 +25,25 @@ export async function POST(request: Request) {
       return jsonError("Please try again later.", 429, {
         retryAfter: limit.retryAfter,
       });
-    if (body.username.toLowerCase() === getAdminUsername())
-      return jsonError("This username is reserved for the administrator.", 409);
 
     const existing = await User.findOne({
-      username: body.username.toLowerCase(),
+      username: body.username,
     });
     if (existing) {
       return jsonError("Username already exists.", 409);
     }
 
     const user = await User.create({
-      username: body.username.toLowerCase(),
+      username: body.username,
       passwordHash: await hashPassword(body.password),
-      role: "user",
+      role: body.role,
     });
 
     return NextResponse.json({
       user: {
         id: user._id.toString(),
         username: user.username,
+        role: user.role,
         createdAt: user.createdAt,
       },
     });
