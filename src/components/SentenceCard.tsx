@@ -8,15 +8,7 @@ import { useEffect, useState } from "react";
 import { SUPPORTED_LANGUAGES } from "@/lib/constants";
 import { useI18n } from "./I18nProvider";
 
-export type SentenceView = {
-  id: string;
-  language: string;
-  topic: string;
-  level: string;
-  frequency: string;
-  text: string;
-  arabicTranslation: string;
-};
+import type { SentenceView } from "@/types/learning";
 
 type SentenceCardProps = {
   sentence: SentenceView;

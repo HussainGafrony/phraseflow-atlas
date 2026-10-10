@@ -11,8 +11,8 @@ import {
 import { createStableHash } from "./crypto";
 import { getDayKey } from "./dates";
 import { generateSentences } from "./ai/service";
-import { DailyUsage } from "@/models/DailyUsage";
-import { Sentence } from "@/models/Sentence";
+import { DailyUsage, type DailyUsageDocument } from "@/models/DailyUsage";
+import { Sentence, type SentenceDocument } from "@/models/Sentence";
 import { SentenceDelivery } from "@/models/SentenceDelivery";
 
 export type SentenceCriteria = {
@@ -27,17 +27,8 @@ export async function getTodaySentencesForUser(
   criteria: SentenceCriteria,
 ) {
   const dayKey = getDayKey();
-  // The unique user-and-day index prevents duplicate counters during concurrent first requests.
-  const usage = await DailyUsage.findOneAndUpdate(
-    { userId, dayKey },
-    { $setOnInsert: { userId, dayKey } },
-    { upsert: true, new: true },
-  ).catch(async (error) => {
-    if (error?.code !== 11000) throw error;
-    const existing = await DailyUsage.findOne({ userId, dayKey });
-    if (!existing) throw error;
-    return existing;
-  });
+  // 1. Load the user's counter and check the daily limit.
+  const usage = await getOrCreateDailyUsage(userId, dayKey);
 
   if (usage.totalDelivered >= DAILY_SENTENCE_LIMIT) {
     return {
@@ -53,21 +44,12 @@ export async function getTodaySentencesForUser(
     DAILY_SENTENCE_LIMIT - usage.totalDelivered,
   );
 
-  const delivered = await SentenceDelivery.find({ userId })
-    .select("sentenceId")
-    .lean();
-  const deliveredIds = delivered.map((item) => item.sentenceId);
-  const avoidSentences = await Sentence.find({ _id: { $in: deliveredIds } })
-    .select("text")
-    .lean();
+  // 2. Generate a full batch that does not repeat earlier deliveries.
+  const previousTexts = await getPreviouslyDeliveredTexts(userId);
 
   // Generate before charging the allowance so provider failures do not consume it.
   // Commit the counter increment and delivery history together in one MongoDB transaction.
-  const sentences = await buildUniqueSentences(
-    criteria,
-    count,
-    avoidSentences.map((item) => item.text),
-  );
+  const sentences = await buildUniqueSentences(criteria, count, previousTexts);
   if (sentences.length < count) {
     return {
       status: "empty" as const,
@@ -77,6 +59,69 @@ export async function getTodaySentencesForUser(
     };
   }
 
+  // 3. Save the delivery and charge the allowance together.
+  const committed = await saveBatchDelivery(
+    userId,
+    dayKey,
+    criteria,
+    usage,
+    sentences,
+  );
+  if (!committed) {
+    return {
+      status: "retry" as const,
+      dayKey,
+      remaining: DAILY_SENTENCE_LIMIT - usage.totalDelivered,
+      sentences: [],
+    };
+  }
+  const totalDelivered = usage.totalDelivered + sentences.length;
+  return {
+    status: "ok" as const,
+    dayKey,
+    remaining: DAILY_SENTENCE_LIMIT - totalDelivered,
+    sentences,
+  };
+}
+
+// Concurrent first requests can both try to create the counter.
+async function getOrCreateDailyUsage(userId: string, dayKey: string) {
+  // The unique user-and-day index prevents duplicate counters during concurrent first requests.
+  try {
+    return await DailyUsage.findOneAndUpdate(
+      { userId, dayKey },
+      { $setOnInsert: { userId, dayKey } },
+      { upsert: true, new: true },
+    );
+  } catch (error) {
+    // MongoDB error 11000 means another request created the same unique key.
+    if ((error as { code?: number }).code !== 11000) throw error;
+    const existing = await DailyUsage.findOne({ userId, dayKey });
+    if (!existing) throw error;
+    return existing;
+  }
+}
+
+async function getPreviouslyDeliveredTexts(userId: string) {
+  const delivered = await SentenceDelivery.find({ userId })
+    .select("sentenceId")
+    .lean();
+  const deliveredIds = delivered.map((item) => item.sentenceId);
+  const avoidSentences = await Sentence.find({ _id: { $in: deliveredIds } })
+    .select("text")
+    .lean();
+
+  return avoidSentences.map((sentence) => sentence.text);
+}
+
+// A transaction either saves both writes or rolls both back. Do not split them.
+async function saveBatchDelivery(
+  userId: string,
+  dayKey: string,
+  criteria: SentenceCriteria,
+  usage: DailyUsageDocument,
+  sentences: SentenceDocument[],
+) {
   const dbSession = await mongoose.startSession();
   let committed = false;
   try {
@@ -113,21 +158,7 @@ export async function getTodaySentencesForUser(
   } finally {
     await dbSession.endSession();
   }
-  if (!committed) {
-    return {
-      status: "retry" as const,
-      dayKey,
-      remaining: DAILY_SENTENCE_LIMIT - usage.totalDelivered,
-      sentences: [],
-    };
-  }
-  const totalDelivered = usage.totalDelivered + sentences.length;
-  return {
-    status: "ok" as const,
-    dayKey,
-    remaining: DAILY_SENTENCE_LIMIT - totalDelivered,
-    sentences,
-  };
+  return committed;
 }
 
 async function buildUniqueSentences(
@@ -141,7 +172,7 @@ async function buildUniqueSentences(
     avoid,
   });
 
-  const results = [];
+  const results: SentenceDocument[] = [];
   const seen = new Set(avoid.map((text) => text.trim().toLowerCase()));
 
   for (const candidate of generated) {

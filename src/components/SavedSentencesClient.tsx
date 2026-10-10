@@ -5,8 +5,9 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import type { SentenceView } from "@/types/learning";
 import { formatDayLabel } from "@/lib/dates";
-import { SentenceCard, type SentenceView } from "./SentenceCard";
+import { SentenceCard } from "./SentenceCard";
 import { useI18n, T } from "./I18nProvider";
 
 type SavedItem = {
@@ -43,11 +44,12 @@ export function SavedSentencesClient() {
   }, []);
 
   const grouped = useMemo(() => {
-    return items.reduce<Record<string, SavedItem[]>>((groups, item) => {
-      groups[item.dayKey] ??= [];
+    const groups: Record<string, SavedItem[]> = {};
+    for (const item of items) {
+      if (!groups[item.dayKey]) groups[item.dayKey] = [];
       groups[item.dayKey].push(item);
-      return groups;
-    }, {});
+    }
+    return groups;
   }, [items]);
 
   return (

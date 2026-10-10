@@ -2,6 +2,10 @@
 
 Greek sentence learning with Arabic translations. The interface supports Arabic (default) and Greek.
 
+## Reading the code
+
+Start with [CODE_GUIDE.md](CODE_GUIDE.md), an English walkthrough for a developer with two or three years of experience. It follows one request from the button to MongoDB and explains the few database operations that must remain atomic.
+
 ## Setup
 
 1. Copy `.env.example` to `.env.local`.

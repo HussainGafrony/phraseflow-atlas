@@ -12,20 +12,23 @@ import {
   TOPICS,
   DAILY_SENTENCE_LIMIT,
 } from "@/lib/constants";
-import { SentenceCard, type SentenceView } from "./SentenceCard";
+import { SentenceCard } from "./SentenceCard";
 import { useI18n, T } from "./I18nProvider";
 
-type ProgressItem = {
-  topic: string;
-  delivered: number;
-  saved: number;
-  percent: number;
-};
+import type {
+  SentenceView,
+  LearningOption,
+  TopicProgress,
+} from "@/types/learning";
+import { LearningSelect } from "./LearningSelect";
+import { TopicProgressList } from "./TopicProgressList";
 
-type LearningOption = {
-  label: string;
-  value: string;
-};
+// Keep the current choice when it still exists; otherwise use the first available option.
+function getAvailableValue(current: string, options?: LearningOption[]) {
+  if (!options || options.length === 0) return current;
+  if (options.some((option) => option.value === current)) return current;
+  return options[0].value;
+}
 
 export function DashboardClient({ username }: { username: string }) {
   const { t } = useI18n();
@@ -36,10 +39,9 @@ export function DashboardClient({ username }: { username: string }) {
   const [remaining, setRemaining] = useState(DAILY_SENTENCE_LIMIT);
   const [message, setMessage] = useState("");
   const [initializing, setInitializing] = useState(true);
-  const [selectedProgress, setSelectedProgress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState("");
-  const [progress, setProgress] = useState<ProgressItem[]>([]);
+  const [progress, setProgress] = useState<TopicProgress[]>([]);
   const [topics, setTopics] = useState<LearningOption[]>(
     TOPICS.map((topic) => ({ label: topic, value: topic })),
   );
@@ -50,6 +52,7 @@ export function DashboardClient({ username }: { username: string }) {
     FREQUENCIES.map((item) => ({ label: item.label, value: item.value })),
   );
 
+  // Stable callbacks let the initial effect run once and allow event handlers to reuse them.
   const loadOptions = useCallback(async () => {
     const response = await fetch("/api/options");
     if (!response.ok) {
@@ -57,21 +60,9 @@ export function DashboardClient({ username }: { username: string }) {
     }
     const data = await response.json();
     setTopics((current) => data.topics ?? current);
-    setTopic((current) =>
-      data.topics?.some((item: LearningOption) => item.value === current)
-        ? current
-        : (data.topics?.[0]?.value ?? current),
-    );
-    setLevel((current) =>
-      data.levels?.some((item: LearningOption) => item.value === current)
-        ? current
-        : (data.levels?.[0]?.value ?? current),
-    );
-    setFrequency((current) =>
-      data.frequencies?.some((item: LearningOption) => item.value === current)
-        ? current
-        : (data.frequencies?.[0]?.value ?? current),
-    );
+    setTopic((current) => getAvailableValue(current, data.topics));
+    setLevel((current) => getAvailableValue(current, data.levels));
+    setFrequency((current) => getAvailableValue(current, data.frequencies));
     setLevels((current) => data.levels ?? current);
     setFrequencies((current) => data.frequencies ?? current);
   }, []);
@@ -94,6 +85,7 @@ export function DashboardClient({ username }: { username: string }) {
   }, []);
 
   useEffect(() => {
+    // These reads are independent, so load them at the same time.
     Promise.all([loadOptions(), refreshProgress(), restoreToday()])
       .catch(() =>
         setMessage(
@@ -190,45 +182,24 @@ export function DashboardClient({ username }: { username: string }) {
       </div>
 
       <div className="control-panel">
-        <label>
-          {t("topic")}
-          <select
-            value={topic}
-            onChange={(event) => setTopic(event.target.value)}
-          >
-            {topics.map((item) => (
-              <option value={item.value} key={item.value}>
-                {t(item.label)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t("level")}
-          <select
-            value={level}
-            onChange={(event) => setLevel(event.target.value)}
-          >
-            {levels.map((item) => (
-              <option value={item.value} key={item.value}>
-                {t(item.label)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t("frequency")}
-          <select
-            value={frequency}
-            onChange={(event) => setFrequency(event.target.value)}
-          >
-            {frequencies.map((item) => (
-              <option value={item.value} key={item.value}>
-                {t(item.label)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <LearningSelect
+          label="topic"
+          value={topic}
+          options={topics}
+          onChange={setTopic}
+        />
+        <LearningSelect
+          label="level"
+          value={level}
+          options={levels}
+          onChange={setLevel}
+        />
+        <LearningSelect
+          label="frequency"
+          value={frequency}
+          options={frequencies}
+          onChange={setFrequency}
+        />
       </div>
 
       <div className="action-row">
@@ -247,30 +218,7 @@ export function DashboardClient({ username }: { username: string }) {
 
       {message ? <p className="form-message">{t(message)}</p> : null}
 
-      <section className="progress-grid" aria-label="Topic progress">
-        {progress.map((item) => (
-          <button
-            className="progress-pill"
-            type="button"
-            key={t(item.topic)}
-            title={`${item.percent}%`}
-            aria-expanded={selectedProgress === item.topic}
-            onClick={() =>
-              setSelectedProgress((current) =>
-                current === item.topic ? null : item.topic,
-              )
-            }
-          >
-            <span>{t(item.topic)}</span>
-            <strong>
-              {selectedProgress === item.topic ? `${item.percent}%` : "🌱"}
-            </strong>
-            <small>
-              {item.saved}/{item.delivered || 0}
-            </small>
-          </button>
-        ))}
-      </section>
+      <TopicProgressList topics={progress} />
 
       <section className="sentence-grid">
         {sentences.map((sentence) => (

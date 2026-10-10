@@ -76,23 +76,19 @@ export async function getSession(): Promise<AppSession | null> {
     const { payload } = await jwtVerify(token, getSessionSecret(), {
       algorithms: ["HS256"],
     });
-    if (
-      !payload.sub ||
-      typeof payload.username !== "string" ||
-      !["user", "admin"].includes(String(payload.role))
-    )
-      return null;
-    // Verify the JWT signature and role even for nonpersistent sessions. Administrators may come from the environment or MongoDB.
-    if (
-      !(payload.role === "admin" && payload.sub === ENV_ADMIN_ID) &&
-      !/^[a-f0-9]{24}$/i.test(payload.sub)
-    )
-      return null;
+    // Check each claim separately so the accepted session shape is easy to see.
+    if (!payload.sub || typeof payload.username !== "string") return null;
+    const role = payload.role;
+    if (role !== "user" && role !== "admin") return null;
+
+    const isEnvironmentAdmin = role === "admin" && payload.sub === ENV_ADMIN_ID;
+    const hasDatabaseId = /^[a-f0-9]{24}$/i.test(payload.sub);
+    if (!isEnvironmentAdmin && !hasDatabaseId) return null;
 
     return {
       userId: payload.sub,
-      username: String(payload.username),
-      role: payload.role as SessionRole,
+      username: payload.username,
+      role,
     };
   } catch {
     return null;

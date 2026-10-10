@@ -1,6 +1,7 @@
 /**
  * Return only the signed-in user's saved sentences with sentence details for grouping by day.
  */
+import { toSentenceView, type StoredSentence } from "@/lib/sentence-view";
 import { NextResponse } from "next/server";
 import { requireApiSession } from "@/lib/auth";
 import { dbConnect } from "@/lib/db";
@@ -19,34 +20,16 @@ export async function GET() {
     await dbConnect();
     const saved = await SavedSentence.find({ userId: session.userId })
       .sort({ createdAt: -1 })
-      .populate("sentenceId")
+      .populate<{ sentenceId: StoredSentence }>("sentenceId")
       .lean();
 
     return NextResponse.json({
       saved: saved.map((item) => {
-        const sentence = item.sentenceId as unknown as {
-          _id: { toString(): string };
-          language: string;
-          topic: string;
-          level: string;
-          frequency: string;
-          text: string;
-          arabicTranslation: string;
-        };
-
         return {
           id: item._id.toString(),
           dayKey: item.dayKey,
           savedAt: item.createdAt,
-          sentence: {
-            id: sentence._id.toString(),
-            language: sentence.language,
-            topic: sentence.topic,
-            level: sentence.level,
-            frequency: sentence.frequency,
-            text: sentence.text,
-            arabicTranslation: sentence.arabicTranslation,
-          },
+          sentence: toSentenceView(item.sentenceId),
         };
       }),
     });

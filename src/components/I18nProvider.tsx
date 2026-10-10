@@ -28,6 +28,22 @@ function applyDocumentLanguage(language: UiLanguage) {
   document.documentElement.lang = language;
 }
 
+// Look up a label in order: named key, legacy English label, provider error, phrase text.
+function translateText(key: string, language: UiLanguage): string {
+  if (key in dictionary.ar) return dictionary[language][key as TranslationKey];
+  const translationKey = sourceKeys[key];
+  if (translationKey) return dictionary[language][translationKey];
+
+  const providerError = key.match(
+    /^(?:Provider|Gemini|Claude|Audio provider) returned (\d+)\.?$/,
+  );
+  if (providerError) {
+    const message = uiPhrases["Provider request failed."][language];
+    return `${message} (${providerError[1]})`;
+  }
+  return uiPhrases[key]?.[language] ?? key;
+}
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] =
     useState<UiLanguage>(DEFAULT_UI_LANGUAGE);
@@ -63,18 +79,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     () => ({
       language,
       setLanguage,
-      t: (key: string) => {
-        if (key in dictionary.ar)
-          return dictionary[language][key as TranslationKey];
-        const oldKey = sourceKeys[key];
-        if (oldKey) return dictionary[language][oldKey];
-        const providerError = key.match(
-          /^(?:Provider|Gemini|Claude|Audio provider) returned (\d+)\.?$/,
-        );
-        if (providerError)
-          return `${uiPhrases["Provider request failed."][language]} (${providerError[1]})`;
-        return uiPhrases[key]?.[language] ?? key;
-      },
+      t: (key: string) => translateText(key, language),
     }),
     [language],
   );

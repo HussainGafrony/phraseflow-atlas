@@ -1,6 +1,7 @@
 /**
  * POST requests a batch within the rate and allowance limits. GET restores today's counter and unsaved sentences without generating more.
  */
+import { toSentenceView } from "@/lib/sentence-view";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db";
 import { handleRouteError, jsonError } from "@/lib/http";
@@ -48,15 +49,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ...result,
-      sentences: result.sentences.map((sentence) => ({
-        id: sentence._id.toString(),
-        language: sentence.language,
-        topic: sentence.topic,
-        level: sentence.level,
-        frequency: sentence.frequency,
-        text: sentence.text,
-        arabicTranslation: sentence.arabicTranslation,
-      })),
+      sentences: result.sentences.map(toSentenceView),
     });
   } catch (error) {
     return handleRouteError(error);
@@ -87,30 +80,21 @@ export async function GET() {
       .map((item) => item.sentenceId)
       .filter((id) => !savedIds.has(String(id)));
     const records = await Sentence.find({ _id: { $in: ids } }).lean();
-    const byId = new Map(
+    // MongoDB may return records in a different order. Restore the delivery order.
+    const sentenceById = new Map(
       records.map((sentence) => [String(sentence._id), sentence]),
     );
+    const visibleSentences = [];
+    for (const id of ids) {
+      const sentence = sentenceById.get(String(id));
+      if (sentence) visibleSentences.push(toSentenceView(sentence));
+    }
     const total = usage?.totalDelivered ?? 0;
     return NextResponse.json(
       {
         dayKey,
         remaining: Math.max(0, DAILY_SENTENCE_LIMIT - total),
-        sentences: ids.flatMap((id) => {
-          const sentence = byId.get(String(id));
-          return sentence
-            ? [
-                {
-                  id: String(sentence._id),
-                  language: sentence.language,
-                  topic: sentence.topic,
-                  level: sentence.level,
-                  frequency: sentence.frequency,
-                  text: sentence.text,
-                  arabicTranslation: sentence.arabicTranslation,
-                },
-              ]
-            : [];
-        }),
+        sentences: visibleSentences,
       },
       { headers: { "Cache-Control": "private, no-store" } },
     );
